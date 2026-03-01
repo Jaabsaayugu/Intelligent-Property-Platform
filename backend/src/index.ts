@@ -6,6 +6,9 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import { authenticate } from "./middleware/auth.middleware";
+import propertyRoutes from "./routes/property.routes";
+import messageRoutes from "./routes/message.routes";
+
 
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
@@ -17,6 +20,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/properties", propertyRoutes);
+app.use("/api/messages", messageRoutes);
+
 
 app.use(
   rateLimit({
