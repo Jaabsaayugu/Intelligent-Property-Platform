@@ -1,2 +1,2 @@
 # Intelligent-Property-Platform
-An AiI based property system for personalized property recomendation
+An Ai based property system for personalized property recomendation
