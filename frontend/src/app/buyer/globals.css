@@ -1,0 +1,9 @@
+/* app/buyer/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Buyer-specific overrides */
+body {
+  background-color: #f8fafc;
+}

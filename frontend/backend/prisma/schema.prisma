@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -22,40 +21,15 @@ model User {
 
 model Property {
   id          String   @id @default(uuid())
-
-  // Step 1: Basic Info
   title       String
   description String
-  propertyType String
-  status      String
-
-  // Step 2: Location
-  address     String
-  city        String
-  county      String?
-  latitude    Float?
-  longitude   Float?
-
-  // Step 3: Details
-  bedrooms    Int?
-  bathrooms   Int?
-  areaSqm     Float?
-  yearBuilt   Int?
-
-  // Step 4: Pricing
   price       Float
-  currency    String
-
-  // Step 5: Features
-  features    String[]
-
-  // Step 6: Images
+  location    String
+  bedrooms    Int
   images      String[]
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Owner
   user        User     @relation(fields: [userId], references: [id])
   userId      String
 }
