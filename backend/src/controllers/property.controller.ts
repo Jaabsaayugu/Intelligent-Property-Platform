@@ -5,19 +5,47 @@ import { AuthRequest } from "../middleware/auth.middleware";
 // CREATE PROPERTY (SELLER ONLY)
 export const createProperty = async (req: AuthRequest, res: Response) => {
   try {
-    // req.user is guaranteed by `authenticate` middleware
     const { user } = req;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    const { title, description, price, location, images, bedrooms } = req.body;
+    const {
+      title,
+      description,
+      propertyType,
+      status,
+      address,
+      city,
+      county,
+      latitude,
+      longitude,
+      bedrooms,
+      bathrooms,
+      areaSqm,
+      yearBuilt,
+      price,
+      currency,
+      features,
+      images,
+    } = req.body;
 
     const property = await prisma.property.create({
       data: {
         title,
         description,
+        propertyType,
+        status,
+        address,
+        city,
+        county,
+        latitude,
+        longitude,
+        bathrooms,
+        areaSqm,
+        yearBuilt,
         price,
-        location,
         bedrooms,
+        currency,
+        features: features || [],
         images,
         user: { connect: { id: user.userId } },
       },
@@ -38,6 +66,7 @@ export const getProperties = async (req: Request, res: Response) => {
       maxPrice,
       bedrooms,
       location,
+      city,
       sortBy = "createdAt",
       order = "desc",
       page = "1",
@@ -48,7 +77,6 @@ export const getProperties = async (req: Request, res: Response) => {
     const limitNumber = Number(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
-    // Build dynamic filter
     const where: any = {};
 
     if (minPrice || maxPrice) {
@@ -60,7 +88,15 @@ export const getProperties = async (req: Request, res: Response) => {
     if (bedrooms) where.bedrooms = Number(bedrooms);
 
     if (location) {
-      where.location = { contains: String(location), mode: "insensitive" };
+      where.OR = [
+        { address: { contains: String(location), mode: "insensitive" } },
+        { city: { contains: String(location), mode: "insensitive" } },
+        { county: { contains: String(location), mode: "insensitive" } },
+      ];
+    }
+
+    if (city) {
+      where.city = { contains: String(city), mode: "insensitive" };
     }
 
     const properties = await prisma.property.findMany({

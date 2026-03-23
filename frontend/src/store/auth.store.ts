@@ -24,19 +24,27 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: (token: string) => {
-        const decoded = jwtDecode<{ sub: string; email: string; role: string }>(token);
+        const decoded = jwtDecode<{
+          sub?: string;
+          userId?: string;
+          email?: string;
+          role?: string;
+        }>(token);
         set({
           token,
           user: {
-            id: decoded.sub,
-            email: decoded.email,
-            role: decoded.role as "BUYER" | "SELLER" | "ADMIN",
+            id: decoded.sub || decoded.userId || "",
+            email: decoded.email || "",
+            role: (decoded.role || "BUYER") as "BUYER" | "SELLER" | "ADMIN",
           },
           isAuthenticated: true,
         });
       },
 
       logout: () => {
+        if (typeof document !== "undefined") {
+          document.cookie = "auth_token=; path=/; Max-Age=0; SameSite=Strict";
+        }
         set({ user: null, token: null, isAuthenticated: false });
       },
     }),

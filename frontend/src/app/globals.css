@@ -1,40 +1,63 @@
 @import "tailwindcss";
 
 @theme {
-  /* Define your custom theme tokens here (no nesting!) */
-  --color-primary: #4f46e5;        /* indigo-600 example */
-  --color-background: 0 0% 100%;   /* light mode */
-  --color-foreground: 222.2 84% 4.9%;
-
-  --font-sans: system-ui, sans-serif;
-  /* Add more: spacing, breakpoints, etc. */
+  --color-primary: #0f766e;
+  --color-background: 38 33% 97%;
+  --color-foreground: 186 48% 11%;
 }
 
-/* Enable dark variant with class strategy (recommended for manual toggle later) */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Apply dark mode overrides here (in @layer base) */
 @layer base {
   :root {
-    --color-background: 0 0% 100%;     /* hsl(0 0% 100%) = white */
-    --color-foreground: 222.2 84% 4.9%; /* dark text */
+    --color-background: 38 33% 97%;
+    --color-foreground: 186 48% 11%;
   }
 
   .dark {
-    --color-background: 222.2 84% 4.9%; /* dark bg */
-    --color-foreground: 0 0% 100%;      /* white text */
+    --color-background: 186 48% 11%;
+    --color-foreground: 38 33% 97%;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     background-color: hsl(var(--color-background));
     color: hsl(var(--color-foreground));
     margin: 0;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans), sans-serif;
+    background-image:
+      radial-gradient(circle at top left, rgba(16, 185, 129, 0.16), transparent 28%),
+      radial-gradient(circle at 85% 15%, rgba(14, 165, 233, 0.18), transparent 24%),
+      linear-gradient(180deg, #fffdf8 0%, #f5efe4 54%, #f8faf7 100%);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 }
 
-/* Optional: define utility aliases if you want to @apply them later */
 @layer utilities {
   .bg-background { background-color: hsl(var(--color-background)); }
   .text-foreground { color: hsl(var(--color-foreground)); }
+  .font-display { font-family: var(--font-display), serif; }
+  .hero-panel {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 250, 240, 0.72)),
+      rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px);
+  }
+  .soft-grid {
+    background-image:
+      linear-gradient(rgba(12, 74, 110, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(12, 74, 110, 0.06) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
 }

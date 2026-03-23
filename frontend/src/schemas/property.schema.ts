@@ -64,5 +64,5 @@ export const step4Schema = propertySchema.pick({
 });
 
 export const step5Schema = propertySchema.pick({
-  features: true,
+  images: true,
 });

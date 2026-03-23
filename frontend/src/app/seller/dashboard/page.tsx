@@ -4,25 +4,20 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import {
-  BarChart,
-  Bar,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
 } from "recharts";
 
-// ────────────────────────────────────────────────
-//  Mock data – replace with real API calls (e.g. via React Query)
-// ────────────────────────────────────────────────
 const stats = [
-  { title: "Active Listings", value: "7", change: "+2 this month", trend: "up" },
-  { title: "Total Views", value: "4,812", change: "+18.4%", trend: "up" },
-  { title: "New Inquiries", value: "23", change: "+5", trend: "up" },
-  { title: "Favorites / Saves", value: "156", change: "+32%", trend: "up" },
+  { title: "Active listings", value: "7", change: "+2 this month" },
+  { title: "Property views", value: "4,812", change: "+18.4%" },
+  { title: "New inquiries", value: "23", change: "+5 this week" },
+  { title: "Saved by buyers", value: "156", change: "+32%" },
 ];
 
 const viewsOverTime = [
@@ -35,14 +30,20 @@ const viewsOverTime = [
 ];
 
 const recentActivity = [
-  { id: "PROP-4821", title: "4bd Villa – Westlands", action: "New inquiry from buyer", time: "2 hours ago", status: "pending" },
-  { id: "PROP-4819", title: "3bd Apartment – Kilimani", action: "Added to favorites (x3)", time: "Yesterday", status: "viewed" },
-  { id: "PROP-4815", title: "Commercial Plot – Ruaka", action: "Listing updated", time: "3 days ago", status: "active" },
+  { id: "PROP-4821", title: "4bd Villa - Westlands", action: "New inquiry from buyer", time: "2 hours ago", status: "pending" },
+  { id: "PROP-4819", title: "3bd Apartment - Kilimani", action: "Added to favorites (x3)", time: "Yesterday", status: "viewed" },
+  { id: "PROP-4815", title: "Commercial Plot - Ruaka", action: "Listing updated", time: "3 days ago", status: "active" },
+];
+
+const listingPreview = [
+  { title: "Westlands Signature Villa", meta: "KSh 12.5M • 4 Beds", insight: "842 views • 7 inquiries" },
+  { title: "Kilimani Urban Apartment", meta: "KSh 8.9M • 3 Beds", insight: "610 views • 4 inquiries" },
+  { title: "Ruaka Commerce Plot", meta: "KSh 18M • Commercial", insight: "391 views • 3 inquiries" },
 ];
 
 export default function SellerDashboard() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function SellerDashboard() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-indigo-600" />
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-teal-700" />
       </div>
     );
   }
@@ -72,144 +73,166 @@ export default function SellerDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header / Topbar – similar style to admin */}
-      <header className="border-b bg-white dark:bg-gray-950">
-        <div className="flex h-16 items-center gap-4 px-6">
-          <div className="flex flex-1 items-center gap-4">
-            <h1 className="text-xl font-semibold">Seller Dashboard</h1>
-          </div>
+    <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+      <div className="absolute inset-0 soft-grid opacity-35" />
+      <div className="absolute left-[8%] top-20 h-56 w-56 rounded-full bg-emerald-300/25 blur-3xl" />
+      <div className="absolute right-[8%] top-10 h-64 w-64 rounded-full bg-amber-200/25 blur-3xl" />
 
-          <div className="flex items-center gap-4">
-            {/* Quick Action Button */}
-            <button
-              onClick={() => router.push("/seller/listings/new")}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              + Add New Property
-            </button>
-
-            {/* Notifications (simple) */}
-            <button className="relative rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-            </button>
-
-            {/* User Info */}
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-sm font-medium">{user.email}</p>
-                <p className="text-xs text-gray-500">Seller</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
-        {/* Stats Cards */}
-        <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat, i) => (
-            <div
-              key={i}
-              className="rounded-xl border bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950"
-            >
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                {stat.title}
+      <div className="relative mx-auto max-w-7xl">
+        <header className="hero-panel rounded-[2rem] border border-white/60 px-6 py-6 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.55)] sm:px-8">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-800/70">
+                Seller Dashboard
               </p>
-              <div className="mt-2 flex items-baseline gap-2">
-                <p className="text-3xl font-bold">{stat.value}</p>
-                <span
-                  className={`text-sm font-medium ${
-                    stat.trend === "up" ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {stat.change}
-                </span>
-              </div>
+              <h1 className="mt-4 font-display text-4xl leading-none text-slate-900 sm:text-5xl">
+                Grow listing momentum
+                <span className="block text-teal-700">from one elevated command center.</span>
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                Welcome back, {user?.email || "seller"}. Track demand, monitor
+                property performance, and launch your next listing with less friction.
+              </p>
             </div>
-          ))}
-        </div>
 
-        {/* Charts & Activity */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Views Trend Chart */}
-          <div className="rounded-xl border bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <h3 className="mb-4 text-lg font-semibold">Property Views (Last 6 Months)</h3>
-            <div className="h-80">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={() => router.push("/seller/listings/new")}
+                className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+              >
+                Add new property
+              </button>
+              <button
+                onClick={logout}
+                className="rounded-full border border-slate-900/10 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {stats.map((stat) => (
+              <div
+                key={stat.title}
+                className="rounded-3xl bg-white/75 px-5 py-5 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.45)]"
+              >
+                <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+                  {stat.title}
+                </p>
+                <p className="mt-3 text-4xl font-bold text-slate-900">{stat.value}</p>
+                <p className="mt-2 text-sm leading-6 text-emerald-700">{stat.change}</p>
+              </div>
+            ))}
+          </div>
+        </header>
+
+        <section className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                  Market attention
+                </p>
+                <h2 className="mt-3 font-display text-3xl text-slate-900">
+                  Property views over time
+                </h2>
+              </div>
+              <span className="rounded-full bg-teal-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-teal-700">
+                Last 6 months
+              </span>
+            </div>
+
+            <div className="mt-8 h-80 rounded-[1.5rem] bg-white/80 p-4">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={viewsOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4ea" />
+                  <XAxis dataKey="name" stroke="#64748b" />
+                  <YAxis stroke="#64748b" />
                   <Tooltip />
-                  <Line type="monotone" dataKey="views" stroke="#6366f1" strokeWidth={2} name="Total Views" />
+                  <Line
+                    type="monotone"
+                    dataKey="views"
+                    stroke="#0f766e"
+                    strokeWidth={3}
+                    name="Total views"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Recent Activity Feed */}
-          <div className="rounded-xl border bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <h3 className="mb-4 text-lg font-semibold">Recent Activity</h3>
-            <div className="space-y-4">
+          <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+              Recent activity
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-slate-900">
+              Signals from the market
+            </h2>
+
+            <div className="mt-8 space-y-4">
               {recentActivity.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0 dark:border-gray-800"
+                  className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4"
                 >
-                  <div>
-                    <p className="font-medium">{item.title}</p>
-                    <p className="text-sm text-gray-500">{item.action}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">{item.time}</p>
-                    <span
-                      className={`mt-1 inline-block rounded px-2 py-0.5 text-xs font-medium ${
-                        item.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : item.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-slate-900">{item.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{item.action}</p>
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
                       {item.status}
                     </span>
                   </div>
+                  <p className="mt-3 text-xs uppercase tracking-[0.24em] text-slate-400">
+                    {item.time}
+                  </p>
                 </div>
               ))}
             </div>
+          </div>
+        </section>
 
-            <div className="mt-4 text-center">
-              <button className="text-sm text-indigo-600 hover:underline">
-                View All Activity →
-              </button>
+        <section className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-[0_28px_80px_-45px_rgba(15,23,42,0.8)] sm:p-8">
+            <p className="text-sm uppercase tracking-[0.28em] text-emerald-300">
+              Seller insight
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold">
+              Listings with refreshed photos are converting faster.
+            </h2>
+            <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
+              Your audience is responding strongest to listings with updated
+              presentation and clear pricing. Consider refreshing underperforming
+              properties this week.
+            </p>
+          </div>
+
+          <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+              My properties
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-slate-900">
+              Listing overview
+            </h2>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {listingPreview.map((listing) => (
+                <div
+                  key={listing.title}
+                  className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <div className="mb-4 h-32 rounded-2xl bg-gradient-to-br from-emerald-100 via-white to-sky-100" />
+                  <h3 className="text-lg font-semibold text-slate-900">{listing.title}</h3>
+                  <p className="mt-2 text-sm text-slate-500">{listing.meta}</p>
+                  <p className="mt-4 text-sm leading-6 text-slate-600">{listing.insight}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* Quick Links / My Properties Summary (optional extension) */}
-        <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-          <h3 className="mb-4 text-lg font-semibold">My Properties Overview</h3>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Example property cards – in real app, map over user's listings */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg border p-4 hover:border-indigo-500 transition-colors">
-                <div className="mb-2 h-32 bg-gray-200 rounded-md dark:bg-gray-800" /> {/* Placeholder image */}
-                <h4 className="font-medium">Sample Property {i}</h4>
-                <p className="text-sm text-gray-500">KSh 12.5M • 4 Beds • Westlands</p>
-                <div className="mt-2 flex justify-between text-xs text-gray-600">
-                  <span>Views: 842</span>
-                  <span>Inquiries: 7</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }

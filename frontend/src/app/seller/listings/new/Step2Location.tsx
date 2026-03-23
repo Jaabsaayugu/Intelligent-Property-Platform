@@ -1,101 +1,85 @@
-// // Step2Location.tsx
-// import { UseFormReturn, Controller } from "react-hook-form";
-// import { PropertyFormData, propertySchema } from "@/schemas/property.schema";
-// import {
-//   FormItem,
-//   FormLabel,
-//   FormControl,
-//   FormMessage,
-// } from "@/components/ui/form";
-// import { Input } from "@/components/ui/input";
-
-// type Props = { form: UseFormReturn<PropertyFormData> };
-
-// export default function Step2Location({ form }: Props) {
-//   return (
-//     <div className="space-y-6">
-//       <Controller
-//         control={form.control}
-//         name="address"
-//         render={({ field }) => (
-//           <FormItem>
-//             <FormLabel>Location / Address *</FormLabel>
-//             <FormControl>
-//               <Input
-//                 placeholder="e.g. Westlands, Nairobi" // or full address
-//                 {...field}
-//               />
-//             </FormControl>
-//             <FormMessage>Required field</FormMessage>
-//             <p className="text-xs text-muted-foreground mt-1">
-//               Be as specific as possible (area, town, county)
-//             </p>
-//           </FormItem>
-//         )}
-//       />
-
-//       {/* You can later add Google Places Autocomplete here */}
-//     </div>
-//   );
-// }
-
-// Step2Location.tsx
-import { UseFormReturn, Controller } from "react-hook-form";
+import { Controller, UseFormReturn } from "react-hook-form";
 import { PropertyFormData } from "@/schemas/property.schema";
-import {
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 
-type Props = { form: UseFormReturn<PropertyFormData> };
+type Props = {
+  form: UseFormReturn<PropertyFormData>;
+  isSubmitting?: boolean;
+};
 
 export default function Step2Location({ form }: Props) {
+  const errors = form.formState.errors;
+
   return (
-    <div className="space-y-6">
-      <Controller
-        control={form.control}
-        name="address"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Full Address / Street *</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="e.g. Muthaiga North, Off Kiambu Road"
+    <div className="space-y-8">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Controller
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <div className="space-y-2 lg:col-span-2">
+              <label className="text-sm font-medium text-slate-700">
+                Full address or street
+              </label>
+              <input
                 {...field}
+                placeholder="Muthaiga North, Off Kiambu Road"
+                className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
               />
-            </FormControl>
-            <FormMessage>Required field</FormMessage>
-          </FormItem>
-        )}
-      />
+              <p className="text-xs text-rose-600">
+                {errors.address?.message}
+              </p>
+            </div>
+          )}
+        />
 
-      <Controller
-        control={form.control}
-        name="city"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>City / Town *</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="e.g. Nairobi, Mombasa, Kisumu"
+        <Controller
+          control={form.control}
+          name="city"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                City or town
+              </label>
+              <input
                 {...field}
+                placeholder="Nairobi"
+                className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
               />
-            </FormControl>
-            <FormMessage>Required field</FormMessage>
-          </FormItem>
-        )}
-      />
+              <p className="text-xs text-rose-600">
+                {errors.city?.message}
+              </p>
+            </div>
+          )}
+        />
 
-      {/* Optional fields – can be added later */}
-      {/* <Controller name="county" ... /> */}
-      {/* <Controller name="latitude" ... /> etc. */}
+        <Controller
+          control={form.control}
+          name="county"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                County
+              </label>
+              <input
+                {...field}
+                value={field.value || ""}
+                placeholder="Nairobi County"
+                className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
+              />
+            </div>
+          )}
+        />
+      </div>
 
-      <p className="text-xs text-muted-foreground">
-        Be as specific as possible. This helps buyers find your property.
-      </p>
+      <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 px-5 py-5">
+        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+          Location note
+        </p>
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          Buyers respond best when the address feels precise and trustworthy. A
+          specific location helps your listing appear more credible before the first inquiry.
+        </p>
+      </div>
     </div>
   );
 }
