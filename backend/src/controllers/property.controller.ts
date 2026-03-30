@@ -145,13 +145,46 @@ export const getProperties = async (req: Request, res: Response) => {
       where.userId = String(sellerId);
     }
 
-    const properties = await prisma.property.findMany({
-      where,
-      include: propertyListInclude as any,
-      orderBy: { [sortBy as string]: order === "asc" ? "asc" : "desc" },
-      skip,
-      take: limitNumber,
-    });
+    let properties: any[] = [];
+
+    try {
+      properties = await prisma.property.findMany({
+        where,
+        include: propertyListInclude as any,
+        orderBy: { [sortBy as string]: order === "asc" ? "asc" : "desc" },
+        skip,
+        take: limitNumber,
+      });
+    } catch (relationError) {
+      console.error("Property list include failed, falling back to base query:", relationError);
+
+      const baseProperties = await prisma.property.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              firstName: true,
+              secondName: true,
+            },
+          },
+        } as any,
+        orderBy: { [sortBy as string]: order === "asc" ? "asc" : "desc" },
+        skip,
+        take: limitNumber,
+      });
+
+      properties = baseProperties.map((property) => ({
+        ...property,
+        _count: {
+          reviews: 0,
+          tourRequests: 0,
+          purchaseRequests: 0,
+        },
+      }));
+    }
 
     const total = await prisma.property.count({ where });
 

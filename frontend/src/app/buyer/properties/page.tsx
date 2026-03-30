@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import PropertyCard from "@/components/property/PropertyCard";
 import api from "@/lib/axios";
@@ -42,19 +43,38 @@ export default function PropertiesPage() {
       <div className="absolute right-[8%] top-16 h-64 w-64 rounded-full bg-sky-300/20 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl space-y-6 sm:space-y-8">
+        <div className="flex justify-end">
+          <Link
+            href="/buyer/dashboard"
+            className="rounded-full border border-slate-900/10 bg-white/85 px-5 py-3 text-sm font-semibold text-slate-700 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.4)] transition hover:bg-white"
+          >
+            Return to dashboard
+          </Link>
+        </div>
+
         <section className="hero-panel rounded-[2rem] border border-white/60 px-5 py-6 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.55)] sm:px-8 sm:py-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-                Browse properties
-              </p>
-              <h1 className="mt-3 font-display text-4xl text-slate-900 sm:text-5xl">
-                Available listings
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                Explore published homes in a calmer, more readable grid with room
-                to compare price, location, and fit at a glance.
-              </p>
+            <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+              <div className="max-w-lg overflow-hidden rounded-[1.75rem] border border-amber-300/80 bg-white/50 p-3 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.45)]">
+                <img
+                  src="https://images.pexels.com/photos/8482523/pexels-photo-8482523.jpeg"
+                  alt="Elegant property lifestyle scene"
+                  className="h-56 w-full rounded-[1.35rem] object-cover opacity-75 sm:h-64 lg:h-72"
+                />
+              </div>
+
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                  Browse properties
+                </p>
+                <h1 className="mt-3 font-display text-4xl text-slate-900 sm:text-5xl">
+                  Available listings
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                  Explore published homes in a calmer, more readable grid with room
+                  to compare price, location, and fit at a glance.
+                </p>
+              </div>
             </div>
 
             <div className="rounded-3xl bg-white/75 px-5 py-4 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.45)]">

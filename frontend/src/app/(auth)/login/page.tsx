@@ -1,35 +1,15 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { useAuthStore } from "@/store/auth.store";
 import api from "@/lib/axios";
 
-const roleOptions = [
-  {
-    key: "buyer",
-    label: "Buyer",
-    description: "Browse listings and track new opportunities.",
-  },
-  {
-    key: "seller",
-    label: "Seller",
-    description: "Manage listings, inquiries, and performance.",
-  },
-  {
-    key: "admin",
-    label: "Admin",
-    description: "Review activity and oversee the platform.",
-  },
-] as const;
-
 function LoginPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login } = useAuthStore();
-  const selectedRole = searchParams.get("role")?.toLowerCase();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -94,50 +74,30 @@ function LoginPageContent() {
   };
 
   return (
-    <div>
+    <div className="rounded-[1.75rem] border border-amber-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(250,248,242,0.95))] p-5 shadow-[0_24px_70px_-45px_rgba(15,23,42,0.6)] sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-800/70">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-700">
             Welcome Back
           </p>
-          <h2 className="mt-3 font-display text-4xl leading-none text-slate-900">
+          <h2 className="mt-3 font-display text-4xl leading-none text-slate-950">
             Sign in to continue
           </h2>
-          <p className="mt-4 max-w-md text-sm leading-6 text-slate-600">
-            Step back into your property workflow with a cleaner, calmer
-            sign-in experience.
+          <p className="mt-4 max-w-md text-sm leading-6 text-slate-700">
+            Step into AfREALTY DATAHOMES through a refined login experience built
+            around clarity, trust, and focus.
           </p>
         </div>
 
         <Link
           href="/"
-          className="hidden rounded-full border border-slate-900/10 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
+          className="hidden rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-amber-50 sm:inline-flex"
         >
           Back home
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        {roleOptions.map((role) => {
-          const isSelected = selectedRole === role.key;
-
-          return (
-            <div
-              key={role.key}
-              className={`rounded-2xl border px-4 py-4 transition ${
-                isSelected
-                  ? "border-teal-700 bg-teal-50 shadow-[0_12px_30px_-20px_rgba(15,118,110,0.75)]"
-                  : "border-slate-200 bg-white/70"
-              }`}
-            >
-              <p className="text-sm font-semibold text-slate-900">{role.label}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-600">
-                {role.description}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      <div className="mt-8 h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
 
       {error && (
         <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -147,7 +107,7 @@ function LoginPageContent() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
+          <label className="mb-2 block text-sm font-medium text-slate-800">
             Email address
           </label>
           <input
@@ -158,13 +118,13 @@ function LoginPageContent() {
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
             }
-            className="block w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3.5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
+            className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
+          <label className="mb-2 block text-sm font-medium text-slate-800">
             Password
           </label>
           <input
@@ -175,7 +135,7 @@ function LoginPageContent() {
             onChange={(e) =>
               setFormData({ ...formData, password: e.target.value })
             }
-            className="block w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3.5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
+            className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
             placeholder="Enter your password"
           />
         </div>
@@ -184,14 +144,14 @@ function LoginPageContent() {
           <label className="flex items-center">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
+              className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
             />
-            <span className="ml-2 text-slate-600">Remember me</span>
+            <span className="ml-2 text-slate-700">Remember me</span>
           </label>
 
           <Link
             href="/forgot-password"
-            className="font-medium text-teal-700 transition hover:text-teal-800 hover:underline"
+            className="font-medium text-slate-900 transition hover:text-amber-700 hover:underline"
           >
             Forgot password?
           </Link>
@@ -202,8 +162,8 @@ function LoginPageContent() {
           disabled={loading}
           className={`w-full rounded-full px-4 py-3.5 text-base font-semibold text-white transition duration-200 ${
             loading
-              ? "cursor-not-allowed bg-teal-400"
-              : "bg-slate-900 shadow-lg shadow-slate-900/15 hover:-translate-y-0.5 hover:bg-slate-800 active:bg-slate-950"
+              ? "cursor-not-allowed bg-slate-500"
+              : "bg-slate-900 shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 hover:bg-[#0d2240] active:bg-slate-950"
           }`}
         >
           {loading ? (
@@ -236,17 +196,17 @@ function LoginPageContent() {
         </button>
       </form>
 
-      <div className="mt-8 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-4 text-sm text-slate-600">
-        <p className="font-medium text-slate-800">New here?</p>
+      <div className="mt-8 rounded-2xl border border-amber-200/70 bg-amber-50/60 px-4 py-4 text-sm text-slate-700">
+        <p className="font-medium text-slate-900">New here?</p>
         <p className="mt-1 leading-6">
           Create an account and choose whether you want to join as a buyer,
           seller, or administrator.
         </p>
       </div>
 
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <p className="mt-6 text-center text-sm text-slate-700">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-semibold text-teal-700 hover:underline">
+        <Link href="/register" className="font-semibold text-amber-700 hover:underline">
           Create one now
         </Link>
       </p>

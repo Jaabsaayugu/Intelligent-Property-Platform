@@ -33,3 +33,68 @@ export async function ensureContactInquiryTable() {
     );
   `);
 }
+
+export async function ensurePropertyInteractionTables() {
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "Message"
+    ADD COLUMN IF NOT EXISTS "propertyId" TEXT;
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "Review" (
+      "id" TEXT PRIMARY KEY,
+      "rating" INTEGER NOT NULL,
+      "comment" TEXT NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "propertyId" TEXT NOT NULL,
+      "userId" TEXT NOT NULL
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "TourRequest" (
+      "id" TEXT PRIMARY KEY,
+      "preferredDate" TIMESTAMP(3) NOT NULL,
+      "notes" TEXT,
+      "status" TEXT NOT NULL DEFAULT 'PENDING',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "propertyId" TEXT NOT NULL,
+      "buyerId" TEXT NOT NULL
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "PurchaseRequest" (
+      "id" TEXT PRIMARY KEY,
+      "offerAmount" DOUBLE PRECISION,
+      "message" TEXT,
+      "status" TEXT NOT NULL DEFAULT 'PENDING',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "propertyId" TEXT NOT NULL,
+      "buyerId" TEXT NOT NULL
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "Review_propertyId_userId_key"
+    ON "Review" ("propertyId", "userId");
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "Review_propertyId_idx"
+    ON "Review" ("propertyId");
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "TourRequest_propertyId_idx"
+    ON "TourRequest" ("propertyId");
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "PurchaseRequest_propertyId_idx"
+    ON "PurchaseRequest" ("propertyId");
+  `);
+}

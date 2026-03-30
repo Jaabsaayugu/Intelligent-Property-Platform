@@ -4,74 +4,126 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  firstName String?
-  secondName String?
-  password  String
-  role      Role     @default(BUYER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  properties Property[]
-  messagesSent Message[] @relation("SentMessages")
-  messagesReceived Message[] @relation("ReceivedMessages")
-}
-
-model Property {
   id          String   @id @default(uuid())
-
-  // Step 1: Basic Info
-  title       String
-  description String
-  propertyType String
-  status      String
-
-  // Step 2: Location
-  address     String
-  city        String
-  county      String?
-  latitude    Float?
-  longitude   Float?
-
-  // Step 3: Details
-  bedrooms    Int?
-  bathrooms   Int?
-  areaSqm     Float?
-  yearBuilt   Int?
-
-  // Step 4: Pricing
-  price       Float
-  currency    String
-
-  // Step 5: Features
-  features    String[]
-
-  // Step 6: Images
-  images      String[]
-
+  email       String   @unique
+  firstName   String?
+  secondName String?
+  password    String
+  role        Role     @default(BUYER)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  properties       Property[]
+  messagesSent     Message[]         @relation("SentMessages")
+  messagesReceived Message[] @relation("ReceivedMessages")
+  reviews          Review[]
+  tourRequests     TourRequest[]
+  purchaseRequests PurchaseRequest[]
+}
+
+model Property {
+  id           String   @id @default(uuid())
+
+  // Step 1: Basic Info
+  title        String
+  description  String
+  propertyType String
+  status       String
+
+  // Step 2: Location
+  address      String
+  city         String
+  county       String?
+  latitude     Float?
+  longitude    Float?
+
+  // Step 3: Details
+  bedrooms     Int?
+  bathrooms    Int?
+  areaSqm      Float?
+  yearBuilt    Int?
+
+  // Step 4: Pricing
+  price        Float
+  currency     String
+
+  // Step 5: Features
+  features     String[]
+
+  // Step 6: Images
+  images       String[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   // Owner
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+
+  reviews          Review[]
+  tourRequests     TourRequest[]
+  purchaseRequests PurchaseRequest[]
+  messages         Message[]
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  content   String
-  createdAt DateTime @default(now())
+  id         String    @id @default(uuid())
+  content    String
+  createdAt  DateTime  @default(now())
+  propertyId String?
 
   senderId   String
   receiverId String
 
-  sender   User @relation("SentMessages", fields: [senderId], references: [id])
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  sender   User      @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User      @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  property Property? @relation(fields: [propertyId], references: [id])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  rating     Int
+  comment    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  propertyId String
+  userId     String
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, userId], name: "propertyId_userId")
+}
+
+model TourRequest {
+  id            String   @id @default(uuid())
+  preferredDate DateTime
+  notes         String?
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  propertyId    String
+  buyerId       String
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  buyer    User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+}
+
+model PurchaseRequest {
+  id          String   @id @default(uuid())
+  offerAmount Float?
+  message     String?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  propertyId  String
+  buyerId     String
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  buyer    User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 }
 
 enum Role {

@@ -5,6 +5,17 @@ export default function AuthLayout({
 }) {
   return (
     <div className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+      <div
+        className="absolute left-0 top-0 hidden h-full w-[44%] lg:block"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, rgba(255,253,248,0.1) 0%, rgba(255,253,248,0.52) 72%, rgba(255,253,248,0.82) 100%), url('https://images.pexels.com/photos/16143718/pexels-photo-16143718.jpeg')",
+          backgroundPosition: "center left",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "cover",
+          opacity: 0.5,
+        }}
+      />
       <div className="absolute inset-0 soft-grid opacity-35" />
       <div className="absolute left-[8%] top-20 h-48 w-48 rounded-full bg-emerald-300/30 blur-3xl" />
       <div className="absolute right-[6%] top-16 h-64 w-64 rounded-full bg-sky-300/30 blur-3xl" />
@@ -17,29 +28,12 @@ export default function AuthLayout({
               Secure Access
             </p>
             <h1 className="mt-6 font-display text-5xl leading-none text-slate-900 xl:text-6xl">
-              Enter the platform
-              <span className="block text-teal-700">through a calmer, clearer gateway.</span>
+              Welcome Back to AfReaLTY Datahomes
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-700">
-              Sign in to manage listings, explore the market, and move across
-              your workflow with the same polished experience as the homepage.
+              Sign in to unlock intelligent property insights, manage your
+              listings, and continue building your real estate future in Africa.
             </p>
-
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              {[
-                { label: "Buyer", detail: "Discover verified spaces" },
-                { label: "Seller", detail: "Publish with confidence" },
-                { label: "Admin", detail: "Keep quality high" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="hero-panel rounded-3xl border border-white/60 px-5 py-5 shadow-[0_18px_60px_-30px_rgba(15,23,42,0.45)]"
-                >
-                  <p className="text-lg font-semibold text-slate-900">{item.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 

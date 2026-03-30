@@ -96,41 +96,69 @@ export default function BuyerDashboard() {
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+      <div
+        className="absolute inset-y-0 left-0 w-full sm:w-[60%] lg:w-[42%]"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, rgba(255,253,248,0.16) 0%, rgba(255,253,248,0.6) 68%, rgba(255,253,248,0.9) 100%), url('https://images.pexels.com/photos/17999591/pexels-photo-17999591.jpeg')",
+          backgroundPosition: "center left",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "cover",
+          opacity: 0.46,
+        }}
+      />
       <div className="absolute inset-0 soft-grid opacity-35" />
       <div className="absolute left-[8%] top-20 h-56 w-56 rounded-full bg-emerald-300/25 blur-3xl" />
       <div className="absolute right-[10%] top-10 h-64 w-64 rounded-full bg-sky-300/25 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl">
+        <div className="mb-4 flex justify-end">
+          <div className="flex items-center gap-3 rounded-full border border-white/60 bg-white/80 px-4 py-3 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)]">
+            <p className="text-sm font-medium text-slate-700">
+              Welcome back, <span className="font-semibold text-slate-900">{getDisplayName(user, "buyer")}</span>
+            </p>
+            <button
+              onClick={logout}
+              className="rounded-full border border-slate-900/10 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+
         <header className="hero-panel rounded-[2rem] border border-white/60 px-6 py-6 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.55)] sm:px-8">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div className="max-w-3xl">
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-800/70">
-                Buyer Dashboard
+                Your Dashboard
               </p>
               <h1 className="mt-4 font-display text-4xl leading-none text-slate-900 sm:text-5xl">
-                Discover your next move
-                <span className="block text-teal-700">with more confidence and less noise.</span>
+                Find Your Next Move with Greater Clarity
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Welcome back, {getDisplayName(user, "buyer")}. Recommended properties now come
-                directly from listings that sellers have actually added to the platform.
+                Browse verified properties directly from sellers — backed by intelligent
+                insights and transparent data.
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={() => router.push("/buyer/properties")}
-                className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
-              >
-                Browse properties
-              </button>
-              <button
-                onClick={logout}
-                className="rounded-full border border-slate-900/10 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
-              >
-                Sign out
-              </button>
+            <div className="w-full max-w-md justify-self-start lg:justify-self-end">
+              <div className="overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/45 p-3 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.45)]">
+                <img
+                  src="https://images.pexels.com/photos/8293749/pexels-photo-8293749.jpeg"
+                  alt="Modern home exterior"
+                  className="h-48 w-full rounded-[1.3rem] object-cover opacity-70 sm:h-56"
+                />
+              </div>
             </div>
+          </div>
+
+          <div className="mt-6 flex justify-start lg:justify-end">
+            <button
+              onClick={() => router.push("/buyer/properties")}
+              className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+            >
+              Browse properties
+            </button>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">

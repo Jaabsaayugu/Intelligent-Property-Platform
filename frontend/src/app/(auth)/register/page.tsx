@@ -48,66 +48,91 @@ export default function RegisterPage() {
   };
 
   return (
-    <div>
-      <h2 className="mb-6 text-center text-2xl font-bold">Create Account</h2>
+    <div className="rounded-[1.75rem] border border-amber-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(250,248,242,0.95))] p-5 shadow-[0_24px_70px_-45px_rgba(15,23,42,0.6)] sm:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-700">
+            Join the Platform
+          </p>
+          <h2 className="mt-3 font-display text-4xl leading-none text-slate-950">
+            Create your account
+          </h2>
+          <p className="mt-4 max-w-md text-sm leading-6 text-slate-700">
+            Open your AfREALTY DATAHOMES account with a clean, elegant registration
+            flow built for buyers, sellers, and administrators.
+          </p>
+        </div>
+
+        <Link
+          href="/"
+          className="hidden rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-amber-50 sm:inline-flex"
+        >
+          Back home
+        </Link>
+      </div>
+
+      <div className="mt-8 h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
 
       {error && (
-        <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+        <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">First name</label>
-          <input
-            type="text"
-            required
-            value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="First name"
-          />
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-800">First name</label>
+            <input
+              type="text"
+              required
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
+              placeholder="First name"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-800">Second name</label>
+            <input
+              type="text"
+              required
+              value={formData.secondName}
+              onChange={(e) => setFormData({ ...formData, secondName: e.target.value })}
+              className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
+              placeholder="Second name"
+            />
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Second name</label>
-          <input
-            type="text"
-            required
-            value={formData.secondName}
-            onChange={(e) => setFormData({ ...formData, secondName: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Second name"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
+          <label className="mb-2 block text-sm font-medium text-slate-800">Email</label>
           <input
             type="email"
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Password</label>
+          <label className="mb-2 block text-sm font-medium text-slate-800">Password</label>
           <input
             type="password"
             required
             minLength={8}
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
+            placeholder="Create a secure password"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">I want to be a...</label>
+          <label className="mb-2 block text-sm font-medium text-slate-800">I want to be a...</label>
           <select
             value={formData.role}
             onChange={(e) =>
@@ -116,7 +141,7 @@ export default function RegisterPage() {
                 role: e.target.value as "BUYER" | "SELLER" | "ADMIN",
               })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
           >
             <option value="BUYER">Buyer</option>
             <option value="SELLER">Seller</option>
@@ -127,15 +152,26 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+          className={`w-full rounded-full px-4 py-3.5 text-base font-semibold text-white transition duration-200 ${
+            loading
+              ? "cursor-not-allowed bg-slate-500"
+              : "bg-slate-900 shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 hover:bg-[#0d2240] active:bg-slate-950"
+          }`}
         >
-          {loading ? "Creating account..." : "Sign Up"}
+          {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-gray-600">
+      <div className="mt-8 rounded-2xl border border-amber-200/70 bg-amber-50/60 px-4 py-4 text-sm text-slate-700">
+        <p className="font-medium text-slate-900">Already part of the platform?</p>
+        <p className="mt-1 leading-6">
+          Sign in and continue with your property workflow inside AfREALTY DATAHOMES.
+        </p>
+      </div>
+
+      <p className="mt-6 text-center text-sm text-slate-700">
         Already have an account?{" "}
-        <Link href="/login" className="text-indigo-600 hover:underline">
+        <Link href="/login" className="font-semibold text-amber-700 hover:underline">
           Sign in
         </Link>
       </p>

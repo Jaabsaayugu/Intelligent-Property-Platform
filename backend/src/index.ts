@@ -9,7 +9,11 @@ import { authenticate } from "./middleware/auth.middleware";
 import propertyRoutes from "./routes/property.routes";
 import messageRoutes from "./routes/message.routes";
 import reviewRoutes from "./routes/review.routes";
-import { ensureContactInquiryTable, ensureUserNameColumns } from "./lib/prisma";
+import {
+  ensureContactInquiryTable,
+  ensurePropertyInteractionTables,
+  ensureUserNameColumns,
+} from "./lib/prisma";
 
 
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
@@ -47,6 +51,7 @@ const PORT = 5000;
 async function bootstrap() {
   await ensureUserNameColumns();
   await ensureContactInquiryTable();
+  await ensurePropertyInteractionTables();
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

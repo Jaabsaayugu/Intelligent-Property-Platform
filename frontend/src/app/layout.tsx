@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AfREALTY DATAHOMES",
-  description: "Unlocking Africa’s Property Future",
+  description: "Unlocking Africa's Property Future",
 };
 
 export default function RootLayout({
@@ -22,9 +22,7 @@ export default function RootLayout({
         } as React.CSSProperties
       }
     >
-      <body className="antialiased">
-        {children}
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

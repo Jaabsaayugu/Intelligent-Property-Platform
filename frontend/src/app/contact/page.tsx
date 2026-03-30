@@ -4,17 +4,17 @@ import ContactInquiryForm from "@/components/marketing/ContactInquiryForm";
 const contactCards = [
   {
     title: "General inquiries",
-    value: "hello@intelligentpropertyplatform.com",
+    value: "afrealtydatahomes@gmail.com",
     text: "Use this for product questions, onboarding help, and feature clarification.",
   },
   {
     title: "Sales and partnerships",
-    value: "+254 700 000 000",
+    value: "0799715875",
     text: "Reach out when you want to discuss platform rollout, partnerships, or collaboration.",
   },
   {
     title: "Office hours",
-    value: "Mon - Fri, 8:00 AM to 6:00 PM",
+    value: "24/7 service",
     text: "Support is structured to help teams move quickly without feeling rushed.",
   },
 ];

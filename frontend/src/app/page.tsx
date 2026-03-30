@@ -54,11 +54,6 @@ export default function Home() {
     <MarketingShell>
       <section className="grid gap-10 pt-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:pt-14">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-4 py-2 text-sm text-slate-700 shadow-sm">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            AfREALTY DATAHOMES with a calmer, more elevated interface
-          </div>
-
           <h1 className="mt-7 font-display text-5xl leading-[0.95] text-slate-950 sm:text-6xl lg:text-7xl">
             Find, present, and manage property in a space that feels
             <span className="block text-teal-700">more premium from the first view.</span>
