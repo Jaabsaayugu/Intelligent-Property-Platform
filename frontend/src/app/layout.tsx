@@ -1,16 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-
-const displayFont = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-display",
-});
-
-const bodyFont = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   title: "Intelligent Property Platform",
@@ -23,8 +12,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${displayFont.variable} ${bodyFont.variable} antialiased`}>
+    <html
+      lang="en"
+      style={
+        {
+          "--font-display": "Georgia, Cambria, 'Times New Roman', Times, serif",
+          "--font-sans":
+            "'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        } as React.CSSProperties
+      }
+    >
+      <body className="antialiased">
         {children}
       </body>
     </html>

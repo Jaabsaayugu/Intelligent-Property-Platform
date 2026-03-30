@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
@@ -25,7 +25,7 @@ const roleOptions = [
   },
 ] as const;
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuthStore();
@@ -245,13 +245,18 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-slate-600">
         Don&apos;t have an account?{" "}
-        <Link
-          href="/auth/register"
-          className="font-semibold text-teal-700 hover:underline"
-        >
+        <Link href="/register" className="font-semibold text-teal-700 hover:underline">
           Create one now
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-slate-600">Loading sign-in...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
