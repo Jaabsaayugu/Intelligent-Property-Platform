@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { getDisplayName } from "@/lib/display-name";
+import api from "@/lib/axios";
 
 type BuyerProperty = {
   id: string;
@@ -43,14 +45,8 @@ export default function BuyerDashboard() {
       setMatchesLoading(true);
 
       try {
-        const response = await fetch("/api/properties?limit=6");
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Could not load recommended properties");
-        }
-
-        setMatches(data.data ?? []);
+        const response = await api.get<{ data: BuyerProperty[] }>("/properties?limit=6");
+        setMatches(response.data.data ?? []);
       } catch (error) {
         console.error("Failed to load buyer recommendations:", error);
         setMatches([]);
@@ -116,7 +112,7 @@ export default function BuyerDashboard() {
                 <span className="block text-teal-700">with more confidence and less noise.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Welcome back, {user?.email || "buyer"}. Recommended properties now come
+                Welcome back, {getDisplayName(user, "buyer")}. Recommended properties now come
                 directly from listings that sellers have actually added to the platform.
               </p>
             </div>

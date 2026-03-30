@@ -8,6 +8,8 @@ import authRoutes from "./routes/auth.routes";
 import { authenticate } from "./middleware/auth.middleware";
 import propertyRoutes from "./routes/property.routes";
 import messageRoutes from "./routes/message.routes";
+import reviewRoutes from "./routes/review.routes";
+import { ensureContactInquiryTable, ensureUserNameColumns } from "./lib/prisma";
 
 
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
@@ -22,6 +24,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 
 app.use(
@@ -41,6 +44,16 @@ app.get("/", (req, res) => {
 
 const PORT = 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+async function bootstrap() {
+  await ensureUserNameColumns();
+  await ensureContactInquiryTable();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+bootstrap().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
 });

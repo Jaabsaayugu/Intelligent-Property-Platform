@@ -1,15 +1,30 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.middleware";
+import { authenticate, authorize } from "../middleware/auth.middleware";
+import { validate } from "../middleware/validate.middleware";
 import {
-  sendMessage,
+  createContactInquiry,
+  deleteContactInquiry,
+  deleteMessage,
+  getAllMessages,
+  getContactInquiries,
   getConversation,
   getUserConversations,
+  sendMessage,
 } from "../controllers/message.controller";
+import {
+  createContactInquirySchema,
+  sendMessageSchema,
+} from "../validators/interaction.validator";
 
 const router = Router();
 
-router.post("/", authenticate, sendMessage); // Send message
-router.get("/conversation/:withUserId", authenticate, getConversation); // Get conversation with a specific user
-router.get("/conversations", authenticate, getUserConversations); // Get all conversations for logged-in user
+router.post("/contact", validate(createContactInquirySchema), createContactInquiry);
+router.get("/contact-inquiries", authenticate, authorize("ADMIN"), getContactInquiries);
+router.delete("/contact-inquiries/:id", authenticate, authorize("ADMIN"), deleteContactInquiry);
+router.get("/all", authenticate, authorize("ADMIN"), getAllMessages);
+router.delete("/:id", authenticate, authorize("ADMIN"), deleteMessage);
+router.post("/", authenticate, validate(sendMessageSchema), sendMessage);
+router.get("/conversation/:withUserId", authenticate, getConversation);
+router.get("/conversations", authenticate, getUserConversations);
 
 export default router;

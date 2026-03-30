@@ -25,3 +25,10 @@ export const sendMessageSchema = z.object({
   propertyId: z.string().min(1).optional(),
   content: z.string().min(1).max(2000),
 });
+
+export const createContactInquirySchema = z.object({
+  firstName: z.string().trim().min(2).max(100),
+  secondName: z.string().trim().min(2).max(100),
+  email: z.string().trim().email(),
+  message: z.string().trim().min(10).max(2000),
+});

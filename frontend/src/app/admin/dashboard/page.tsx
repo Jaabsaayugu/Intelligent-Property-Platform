@@ -1,17 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { getDisplayName } from "@/lib/display-name";
+import api from "@/lib/axios";
 
 type AdminReview = {
   id: string;
@@ -21,6 +14,8 @@ type AdminReview = {
   user: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
   };
   property: {
     id: string;
@@ -29,51 +24,115 @@ type AdminReview = {
   };
 };
 
-const chartData = [
-  { name: "Jan", properties: 400, sales: 2400 },
-  { name: "Feb", properties: 300, sales: 1398 },
-  { name: "Mar", properties: 200, sales: 9800 },
-  { name: "Apr", properties: 278, sales: 3908 },
-  { name: "May", properties: 189, sales: 4800 },
-  { name: "Jun", properties: 239, sales: 3800 },
-  { name: "Jul", properties: 349, sales: 4300 },
-];
+type AdminMessage = {
+  id: string;
+  content: string;
+  createdAt: string;
+  senderId: string;
+  receiverId: string;
+  propertyId?: string | null;
+  sender: {
+    id: string;
+    email: string;
+    role: string;
+    firstName?: string;
+    secondName?: string;
+  };
+  receiver: {
+    id: string;
+    email: string;
+    role: string;
+    firstName?: string;
+    secondName?: string;
+  };
+  property?: {
+    id: string;
+    title: string;
+  } | null;
+};
 
-const alerts = [
-  "Moderation queue increased by 7% since yesterday",
-  "Seller activity is strongest in Nairobi and Kiambu",
-  "Approval turnaround remains below 24 hours",
-];
+type ContactInquiry = {
+  id: string;
+  firstName: string;
+  secondName: string;
+  email: string;
+  message: string;
+  createdAt: string;
+};
+
+type ManagedProperty = {
+  id: string;
+  title: string;
+  description: string;
+  address: string;
+  city: string;
+  status: string;
+  propertyType: string;
+  price: number;
+  currency: string;
+  user: {
+    id: string;
+    email: string;
+    firstName?: string;
+    secondName?: string;
+  };
+};
+
+type PropertyEditForm = {
+  title: string;
+  description: string;
+  address: string;
+  city: string;
+  status: string;
+  propertyType: string;
+  price: string;
+};
+
+const createEditForm = (property: ManagedProperty): PropertyEditForm => ({
+  title: property.title,
+  description: property.description,
+  address: property.address,
+  city: property.city,
+  status: property.status,
+  propertyType: property.propertyType,
+  price: String(property.price),
+});
 
 export default function AdminDashboard() {
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<AdminMessage[]>([]);
+  const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
+  const [properties, setProperties] = useState<ManagedProperty[]>([]);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [editingPropertyId, setEditingPropertyId] = useState<string | null>(null);
+  const [propertyForm, setPropertyForm] = useState<PropertyEditForm | null>(null);
+  const [savingProperty, setSavingProperty] = useState(false);
 
-  const loadReviews = async () => {
-    setReviewsLoading(true);
-    setReviewError(null);
+  const loadDashboardData = async () => {
+    setRefreshing(true);
+    setDashboardError(null);
 
     try {
-      const token = useAuthStore.getState().token;
-      const response = await fetch("/api/reviews", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await response.json();
+      const [reviewResponse, messageResponse, inquiryResponse, propertyResponse] = await Promise.all([
+        api.get<{ data: AdminReview[] }>("/reviews"),
+        api.get<{ data: AdminMessage[] }>("/messages/all"),
+        api.get<{ data: ContactInquiry[] }>("/messages/contact-inquiries"),
+        api.get<{ data: ManagedProperty[] }>("/properties?limit=100"),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(data.message || "Could not load reviews");
-      }
-
-      setReviews(data.data ?? []);
+      setReviews(reviewResponse.data.data ?? []);
+      setMessages(messageResponse.data.data ?? []);
+      setInquiries(inquiryResponse.data.data ?? []);
+      setProperties(propertyResponse.data.data ?? []);
     } catch (error) {
-      console.error("Failed to load reviews:", error);
-      setReviewError("We could not load review moderation data right now.");
+      console.error("Failed to load admin data:", error);
+      setDashboardError("We could not load the latest admin dashboard data.");
     } finally {
-      setReviewsLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -93,9 +152,94 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (useAuthStore.getState().user?.role === "ADMIN") {
-      void loadReviews();
+      void loadDashboardData();
     }
   }, []);
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      await api.delete(`/reviews/${reviewId}`);
+      setReviews((current) => current.filter((review) => review.id !== reviewId));
+    } catch (error) {
+      console.error("Failed to delete review:", error);
+      setDashboardError("We could not delete that review right now.");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await api.delete(`/messages/${messageId}`);
+      setMessages((current) => current.filter((message) => message.id !== messageId));
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      setDashboardError("We could not delete that message right now.");
+    }
+  };
+
+  const handleDeleteInquiry = async (inquiryId: string) => {
+    try {
+      await api.delete(`/messages/contact-inquiries/${inquiryId}`);
+      setInquiries((current) => current.filter((inquiry) => inquiry.id !== inquiryId));
+    } catch (error) {
+      console.error("Failed to delete inquiry:", error);
+      setDashboardError("We could not delete that contact inquiry right now.");
+    }
+  };
+
+  const handleDeleteProperty = async (propertyId: string) => {
+    try {
+      await api.delete(`/properties/${propertyId}`);
+      setProperties((current) => current.filter((property) => property.id !== propertyId));
+      if (editingPropertyId === propertyId) {
+        setEditingPropertyId(null);
+        setPropertyForm(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete property:", error);
+      setDashboardError("We could not delete that property right now.");
+    }
+  };
+
+  const startEditingProperty = (property: ManagedProperty) => {
+    setEditingPropertyId(property.id);
+    setPropertyForm(createEditForm(property));
+  };
+
+  const handlePropertySave = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!editingPropertyId || !propertyForm) {
+      return;
+    }
+
+    setSavingProperty(true);
+
+    try {
+      const response = await api.put<ManagedProperty>(`/properties/${editingPropertyId}`, {
+        ...propertyForm,
+        price: Number(propertyForm.price),
+      });
+
+      setProperties((current) =>
+        current.map((property) =>
+          property.id === editingPropertyId
+            ? {
+                ...property,
+                ...response.data,
+                user: response.data.user ?? property.user,
+              }
+            : property
+        )
+      );
+      setEditingPropertyId(null);
+      setPropertyForm(null);
+    } catch (error) {
+      console.error("Failed to update property:", error);
+      setDashboardError("We could not save that property right now.");
+    } finally {
+      setSavingProperty(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -110,43 +254,11 @@ export default function AdminDashboard() {
   }
 
   const stats = [
-    { title: "Reviews to moderate", value: String(reviews.length), change: "Marketplace feedback queue" },
-    {
-      title: "Five-star reviews",
-      value: String(reviews.filter((review) => review.rating === 5).length),
-      change: "Strong buyer sentiment",
-    },
-    {
-      title: "Recent properties",
-      value: String(new Set(reviews.map((review) => review.property.id)).size),
-      change: "Listings with public feedback",
-    },
-    {
-      title: "Reviewed buyers",
-      value: String(new Set(reviews.map((review) => review.user.id)).size),
-      change: "Distinct buyer voices",
-    },
+    { title: "Reviews", value: String(reviews.length), detail: "Public feedback to moderate" },
+    { title: "Messages", value: String(messages.length), detail: "Buyer, seller, and admin-visible chat records" },
+    { title: "Inquiries", value: String(inquiries.length), detail: "Contact page submissions sent to admins" },
+    { title: "Properties", value: String(properties.length), detail: "Listings you can edit or remove" },
   ];
-
-  const handleDeleteReview = async (reviewId: string) => {
-    try {
-      const token = useAuthStore.getState().token;
-      const response = await fetch(`/api/reviews/${reviewId}`, {
-        method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Could not delete review");
-      }
-
-      setReviews((current) => current.filter((review) => review.id !== reviewId));
-    } catch (error) {
-      console.error("Failed to delete review:", error);
-      setReviewError("We could not delete that review right now.");
-    }
-  };
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
@@ -162,21 +274,21 @@ export default function AdminDashboard() {
                 Admin Dashboard
               </p>
               <h1 className="mt-4 font-display text-4xl leading-none text-slate-900 sm:text-5xl">
-                Keep the platform
-                <span className="block text-teal-700">trusted, balanced, and moving well.</span>
+                Moderate reviews, messages,
+                <span className="block text-teal-700">contact inquiries, and live listings.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Welcome back, {user?.email || "administrator"}. Buyer reviews are now
-                visible here, and you can remove any review directly from this moderation panel.
+                Welcome back, {getDisplayName(user, "administrator")}. You can now monitor
+                communication across the marketplace and edit or delete seller listings directly.
               </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => void loadReviews()}
+                onClick={() => void loadDashboardData()}
                 className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
               >
-                Refresh reviews
+                {refreshing ? "Refreshing..." : "Refresh dashboard"}
               </button>
               <button
                 onClick={logout}
@@ -193,144 +305,268 @@ export default function AdminDashboard() {
                 key={stat.title}
                 className="rounded-3xl bg-white/75 px-5 py-5 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.45)]"
               >
-                <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-                  {stat.title}
-                </p>
+                <p className="text-sm uppercase tracking-[0.24em] text-slate-500">{stat.title}</p>
                 <p className="mt-3 text-4xl font-bold text-slate-900">{stat.value}</p>
-                <p className="mt-2 text-sm leading-6 text-emerald-700">{stat.change}</p>
+                <p className="mt-2 text-sm leading-6 text-emerald-700">{stat.detail}</p>
               </div>
             ))}
           </div>
         </header>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-                  Activity overview
-                </p>
-                <h2 className="mt-3 font-display text-3xl text-slate-900">
-                  Platform growth pulse
-                </h2>
-              </div>
-              <span className="rounded-full bg-teal-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-teal-700">
-                Monthly
-              </span>
-            </div>
-
-            <div className="mt-8 h-80 rounded-[1.5rem] bg-white/80 p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4ea" />
-                  <XAxis dataKey="name" stroke="#64748b" />
-                  <YAxis stroke="#64748b" />
-                  <Tooltip />
-                  <Bar dataKey="properties" fill="#0f766e" name="Properties" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="sales" fill="#0f172a" name="Sales (KSh)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        {dashboardError && (
+          <div className="mt-6 rounded-[1.5rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+            {dashboardError}
           </div>
+        )}
 
+        <section className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
               Review moderation
             </p>
-            <h2 className="mt-3 font-display text-3xl text-slate-900">
-              Buyer reviews
-            </h2>
-
+            <h2 className="mt-3 font-display text-3xl text-slate-900">Buyer reviews</h2>
             <div className="mt-8 space-y-4">
-              {reviewsLoading && (
+              {reviews.length === 0 && (
                 <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm text-slate-600">
-                  Loading reviews...
+                  No reviews are waiting right now.
                 </div>
               )}
-
-              {!reviewsLoading && reviewError && (
-                <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
-                  {reviewError}
-                </div>
-              )}
-
-              {!reviewsLoading && !reviewError && reviews.length === 0 && (
-                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm text-slate-600">
-                  No property reviews have been submitted yet.
-                </div>
-              )}
-
-              {!reviewsLoading &&
-                !reviewError &&
-                reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-slate-900">{review.property.title}</p>
-                        <p className="mt-2 text-sm text-slate-500">
-                          {review.user.email} • {review.property.city}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-                        {review.rating}/5
-                      </span>
-                    </div>
-                    <p className="mt-4 text-sm leading-7 text-slate-600">{review.comment}</p>
-                    <div className="mt-4 flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
-                        {new Date(review.createdAt).toLocaleString()}
+              {reviews.map((review) => (
+                <div key={review.id} className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-slate-900">{review.property.title}</p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {getDisplayName(review.user, "Buyer")} • {review.property.city}
                       </p>
-                      <button
-                        onClick={() => void handleDeleteReview(review.id)}
-                        className="text-sm font-semibold text-rose-700 hover:underline"
-                      >
-                        Delete review
-                      </button>
                     </div>
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+                      {review.rating}/5
+                    </span>
                   </div>
-                ))}
+                  <p className="mt-4 text-sm leading-7 text-slate-600">{review.comment}</p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                      {new Date(review.createdAt).toLocaleString()}
+                    </p>
+                    <button
+                      onClick={() => void handleDeleteReview(review.id)}
+                      className="text-sm font-semibold text-rose-700 hover:underline"
+                    >
+                      Delete review
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </section>
-
-        <section className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-[0_28px_80px_-45px_rgba(15,23,42,0.8)] sm:p-8">
-            <p className="text-sm uppercase tracking-[0.28em] text-emerald-300">
-              Operations brief
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold">
-              Review moderation is now part of the admin workflow.
-            </h2>
-            <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
-              Buyers can leave public property reviews for everyone to read, while
-              administrators can remove unsuitable feedback from this dashboard.
-            </p>
           </div>
 
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-              Watchlist
+              Contact inbox
             </p>
-            <h2 className="mt-3 font-display text-3xl text-slate-900">
-              High-level alerts
-            </h2>
-
+            <h2 className="mt-3 font-display text-3xl text-slate-900">Contact page inquiries</h2>
             <div className="mt-8 space-y-4">
-              {alerts.map((alert, index) => (
-                <div
-                  key={alert}
-                  className="flex items-start gap-4 rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4"
-                >
-                  <span className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-sm font-semibold text-teal-700">
-                    {index + 1}
-                  </span>
-                  <p className="text-sm leading-7 text-slate-600">{alert}</p>
+              {inquiries.length === 0 && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm text-slate-600">
+                  No contact inquiries have been submitted yet.
+                </div>
+              )}
+              {inquiries.map((inquiry) => (
+                <div key={inquiry.id} className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4">
+                  <p className="font-semibold text-slate-900">
+                    {inquiry.firstName} {inquiry.secondName}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-500">{inquiry.email}</p>
+                  <p className="mt-4 text-sm leading-7 text-slate-600">{inquiry.message}</p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                      {new Date(inquiry.createdAt).toLocaleString()}
+                    </p>
+                    <button
+                      onClick={() => void handleDeleteInquiry(inquiry.id)}
+                      className="text-sm font-semibold text-rose-700 hover:underline"
+                    >
+                      Delete inquiry
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="mt-8 hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+            Message oversight
+          </p>
+          <h2 className="mt-3 font-display text-3xl text-slate-900">Buyer and seller messages</h2>
+          <div className="mt-8 grid gap-4 xl:grid-cols-2">
+            {messages.length === 0 && (
+              <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm text-slate-600">
+                No messages have been exchanged yet.
+              </div>
+            )}
+            {messages.map((message) => (
+              <div key={message.id} className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                  <span>{getDisplayName(message.sender, "Sender")}</span>
+                  <span>→</span>
+                  <span>{getDisplayName(message.receiver, "Receiver")}</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+                    {message.sender.role.toLowerCase()} to {message.receiver.role.toLowerCase()}
+                  </span>
+                </div>
+                {message.property?.title && (
+                  <p className="mt-3 text-sm font-semibold text-teal-700">{message.property.title}</p>
+                )}
+                <p className="mt-3 text-sm leading-7 text-slate-600">{message.content}</p>
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                    {new Date(message.createdAt).toLocaleString()}
+                  </p>
+                  <button
+                    onClick={() => void handleDeleteMessage(message.id)}
+                    className="text-sm font-semibold text-rose-700 hover:underline"
+                  >
+                    Delete message
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+              Property management
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-slate-900">Live seller listings</h2>
+            <div className="mt-8 space-y-4">
+              {properties.length === 0 && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm text-slate-600">
+                  No seller properties were found.
+                </div>
+              )}
+              {properties.map((property) => (
+                <div key={property.id} className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-900">{property.title}</p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        Seller: {getDisplayName(property.user, "Seller")} • {property.city}
+                      </p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {property.currency} {property.price.toLocaleString()} • {property.propertyType} •{" "}
+                        <span className="capitalize">{property.status}</span>
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">{property.description}</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => startEditingProperty(property)}
+                        className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        Edit property
+                      </button>
+                      <button
+                        onClick={() => void handleDeleteProperty(property.id)}
+                        className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+              Property editor
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-slate-900">
+              {editingPropertyId ? "Edit the selected property" : "Choose a property to edit"}
+            </h2>
+
+            {!editingPropertyId || !propertyForm ? (
+              <div className="mt-8 rounded-[1.5rem] bg-white/80 px-5 py-4 text-sm leading-7 text-slate-600">
+                Select any seller listing from the left to update its title, pricing, address,
+                type, status, or description.
+              </div>
+            ) : (
+              <form onSubmit={handlePropertySave} className="mt-8 space-y-4">
+                <input
+                  value={propertyForm.title}
+                  onChange={(event) => setPropertyForm((current) => current ? { ...current, title: event.target.value } : current)}
+                  placeholder="Title"
+                  className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                />
+                <textarea
+                  rows={4}
+                  value={propertyForm.description}
+                  onChange={(event) => setPropertyForm((current) => current ? { ...current, description: event.target.value } : current)}
+                  placeholder="Description"
+                  className="block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3"
+                />
+                <input
+                  value={propertyForm.address}
+                  onChange={(event) => setPropertyForm((current) => current ? { ...current, address: event.target.value } : current)}
+                  placeholder="Address"
+                  className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <input
+                    value={propertyForm.city}
+                    onChange={(event) => setPropertyForm((current) => current ? { ...current, city: event.target.value } : current)}
+                    placeholder="City"
+                    className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  />
+                  <input
+                    value={propertyForm.price}
+                    onChange={(event) => setPropertyForm((current) => current ? { ...current, price: event.target.value } : current)}
+                    placeholder="Price"
+                    type="number"
+                    className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <input
+                    value={propertyForm.propertyType}
+                    onChange={(event) => setPropertyForm((current) => current ? { ...current, propertyType: event.target.value } : current)}
+                    placeholder="Property type"
+                    className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  />
+                  <input
+                    value={propertyForm.status}
+                    onChange={(event) => setPropertyForm((current) => current ? { ...current, status: event.target.value } : current)}
+                    placeholder="Status"
+                    className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  />
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="submit"
+                    disabled={savingProperty}
+                    className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {savingProperty ? "Saving..." : "Save changes"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingPropertyId(null);
+                      setPropertyForm(null);
+                    }}
+                    className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </section>
       </div>

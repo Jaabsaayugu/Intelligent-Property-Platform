@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import api from "@/lib/axios";
+import { getDisplayName } from "@/lib/display-name";
 import { useAuthStore } from "@/store/auth.store";
 
 type PropertyReview = {
@@ -14,6 +15,8 @@ type PropertyReview = {
   user: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
   };
 };
 
@@ -37,9 +40,22 @@ type PropertyDetail = {
   user: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
     role: string;
   };
   reviews: PropertyReview[];
+};
+
+type PropertyApiResponse = Omit<PropertyDetail, "reviews" | "user"> & {
+  reviews?: PropertyReview[];
+  user?: {
+    id?: string;
+    email?: string;
+    firstName?: string;
+    secondName?: string;
+    role?: string;
+  };
 };
 
 type Message = {
@@ -51,11 +67,15 @@ type Message = {
   sender: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
     role: string;
   };
   receiver: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
     role: string;
   };
 };
@@ -68,6 +88,8 @@ type TourRequest = {
   buyer: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
   };
 };
 
@@ -79,6 +101,8 @@ type PurchaseRequest = {
   buyer: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
   };
 };
 
@@ -88,6 +112,7 @@ export default function PropertyDetailsPage() {
   const { isAuthenticated, user } = useAuthStore();
   const propertyId = typeof params.id === "string" ? params.id : "";
 
+  const [hasMounted, setHasMounted] = useState(false);
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,8 +129,11 @@ export default function PropertyDetailsPage() {
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const isOwner = Boolean(user && property && user.id === property.user.id);
-  const canActAsBuyer = Boolean(isAuthenticated && user?.role === "BUYER" && property && user.id !== property.user.id);
+  const sellerId = property?.user.id ?? "";
+  const isOwner = Boolean(user && sellerId && user.id === sellerId);
+  const canActAsBuyer = Boolean(
+    isAuthenticated && user?.role === "BUYER" && property && sellerId && user.id !== sellerId
+  );
 
   const loadProperty = async () => {
     if (!propertyId) return;
@@ -114,8 +142,20 @@ export default function PropertyDetailsPage() {
     setError(null);
 
     try {
-      const response = await api.get<PropertyDetail>(`/properties/${propertyId}`);
-      setProperty(response.data);
+      const response = await api.get<PropertyApiResponse>(`/properties/${propertyId}`);
+      const data = response.data;
+
+      setProperty({
+        ...data,
+        user: {
+          id: data.user?.id ?? "",
+          email: data.user?.email ?? "Unknown seller",
+          firstName: data.user?.firstName ?? "",
+          secondName: data.user?.secondName ?? "",
+          role: data.user?.role ?? "SELLER",
+        },
+        reviews: data.reviews ?? [],
+      });
     } catch (fetchError) {
       console.error("Failed to load property:", fetchError);
       setError("We could not load this property right now.");
@@ -156,14 +196,18 @@ export default function PropertyDetailsPage() {
   };
 
   useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
     void loadProperty();
   }, [propertyId]);
 
   useEffect(() => {
-    if (property && canActAsBuyer) {
-      void loadConversation(property.user.id);
+    if (property && sellerId && canActAsBuyer) {
+      void loadConversation(sellerId);
     }
-  }, [canActAsBuyer, property]);
+  }, [canActAsBuyer, property, sellerId]);
 
   useEffect(() => {
     if (isOwner) {
@@ -263,14 +307,14 @@ export default function PropertyDetailsPage() {
       });
       setMessageDraft("");
       setActionMessage("Your message has been sent.");
-      await loadConversation(property.user.id);
+      await loadConversation(sellerId);
     } catch (submitError) {
       console.error("Failed to send message:", submitError);
       setActionMessage("We could not send your message right now.");
     }
   };
 
-  if (loading) {
+  if (!hasMounted || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-teal-700" />
@@ -287,6 +331,8 @@ export default function PropertyDetailsPage() {
       </main>
     );
   }
+
+  const reviews = property.reviews ?? [];
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
@@ -362,7 +408,7 @@ export default function PropertyDetailsPage() {
                 Contact and trust
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                Seller email: {property.user.email}
+                Seller: {getDisplayName(property.user, "Seller")}
               </p>
               <p className="mt-2 text-sm leading-7 text-slate-600">
                 Listing status: <span className="capitalize">{property.status}</span>
@@ -389,19 +435,19 @@ export default function PropertyDetailsPage() {
               </h2>
 
               <div className="mt-8 space-y-4">
-                {property.reviews.length === 0 && (
+                {reviews.length === 0 && (
                   <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 text-sm text-slate-600">
                     No reviews yet for this property.
                   </div>
                 )}
 
-                {property.reviews.map((review) => (
+                {reviews.map((review) => (
                   <div
                     key={review.id}
                     className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5"
                   >
                     <div className="flex items-center justify-between gap-4">
-                      <p className="font-semibold text-slate-900">{review.user.email}</p>
+                      <p className="font-semibold text-slate-900">{getDisplayName(review.user, "Buyer")}</p>
                       <p className="text-sm font-semibold text-amber-600">
                         {review.rating}/5
                       </p>
@@ -536,7 +582,7 @@ export default function PropertyDetailsPage() {
                           }`}
                         >
                           <p className="font-semibold">
-                            {isCurrentUser ? "You" : message.sender.email}
+                            {isCurrentUser ? "You" : getDisplayName(message.sender, "Seller")}
                           </p>
                           <p className="mt-1">{message.content}</p>
                         </div>
@@ -577,7 +623,7 @@ export default function PropertyDetailsPage() {
                     )}
                     {tourRequests.map((request) => (
                       <div key={request.id} className="rounded-[1.5rem] bg-white/80 p-4">
-                        <p className="font-semibold text-slate-900">{request.buyer.email}</p>
+                        <p className="font-semibold text-slate-900">{getDisplayName(request.buyer, "Buyer")}</p>
                         <p className="mt-2 text-sm text-slate-600">
                           Preferred date: {new Date(request.preferredDate).toLocaleString()}
                         </p>
@@ -602,7 +648,7 @@ export default function PropertyDetailsPage() {
                     )}
                     {purchaseRequests.map((request) => (
                       <div key={request.id} className="rounded-[1.5rem] bg-white/80 p-4">
-                        <p className="font-semibold text-slate-900">{request.buyer.email}</p>
+                        <p className="font-semibold text-slate-900">{getDisplayName(request.buyer, "Buyer")}</p>
                         <p className="mt-2 text-sm text-slate-600">
                           Offer: {request.offerAmount ? `${property.currency} ${request.offerAmount.toLocaleString()}` : "Not specified"}
                         </p>

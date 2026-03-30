@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Intelligent Property Platform",
-  description: "Find, list and manage properties intelligently",
+  title: "AfREALTY DATAHOMES",
+  description: "Unlocking Africa’s Property Future",
 };
 
 export default function RootLayout({

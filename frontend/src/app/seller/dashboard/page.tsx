@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { getDisplayName } from "@/lib/display-name";
+import api from "@/lib/axios";
 import {
   CartesianGrid,
   Line,
@@ -98,14 +100,10 @@ export default function SellerDashboard() {
       setPropertiesError(null);
 
       try {
-        const response = await fetch(`/api/properties?sellerId=${currentUser.id}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Could not load your properties");
-        }
-
-        setProperties(data.data ?? []);
+        const response = await api.get<{ data: SellerProperty[] }>(
+          `/properties?sellerId=${currentUser.id}`
+        );
+        setProperties(response.data.data ?? []);
       } catch (error) {
         console.error("Failed to load seller properties:", error);
         setPropertiesError("We could not load your listings right now.");
@@ -190,7 +188,7 @@ export default function SellerDashboard() {
                 <span className="block text-teal-700">from one elevated command center.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Welcome back, {user?.email || "seller"}. Your dashboard now shows
+                Welcome back, {getDisplayName(user, "seller")}. Your dashboard now shows
                 only the properties you have actually added, together with the buyer
                 activity attached to them.
               </p>

@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import api from "@/lib/axios";
+import { getDisplayName } from "@/lib/display-name";
 import { useAuthStore } from "@/store/auth.store";
 
 type ConversationPreview = {
@@ -15,11 +16,15 @@ type ConversationPreview = {
   sender: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
     role: string;
   };
   receiver: {
     id: string;
     email: string;
+    firstName?: string;
+    secondName?: string;
     role: string;
   };
   property?: {
@@ -159,7 +164,7 @@ function MessagesPageContent() {
                       : "border-slate-200/80 bg-white/80"
                   }`}
                 >
-                  <p className="font-semibold text-slate-900">{otherUser.email}</p>
+                  <p className="font-semibold text-slate-900">{getDisplayName(otherUser, "User")}</p>
                   <p className="mt-2 text-sm text-slate-500">
                     {conversation.property?.title || "General conversation"}
                   </p>
@@ -207,7 +212,7 @@ function MessagesPageContent() {
                     isMine ? "ml-10 bg-teal-700 text-white" : "mr-10 bg-white/80 text-slate-700"
                   }`}
                 >
-                  <p className="font-semibold">{isMine ? "You" : message.sender.email}</p>
+                  <p className="font-semibold">{isMine ? "You" : getDisplayName(message.sender, "User")}</p>
                   {message.property?.title && (
                     <p className={`mt-1 text-xs ${isMine ? "text-white/80" : "text-slate-500"}`}>
                       {message.property.title}

@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role, firstName, secondName } = req.body;
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -19,11 +19,13 @@ export const register = async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
+    const user = await (prisma.user as any).create({
       data: {
         email,
         password: hashedPassword,
         role,
+        firstName,
+        secondName,
       },
     });
 
@@ -37,7 +39,7 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    const user = await prisma.user.findUnique({
+    const user = await (prisma.user as any).findUnique({
       where: { email },
     });
 
@@ -52,7 +54,14 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { sub: user.id, userId: user.id, email: user.email, role: user.role },
+      {
+        sub: user.id,
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName ?? "",
+        secondName: user.secondName ?? "",
+      },
       JWT_SECRET,
       { expiresIn: "7d" }
     );

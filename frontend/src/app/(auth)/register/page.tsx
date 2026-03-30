@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function RegisterPage() {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const router = useRouter();
   const [formData, setFormData] = useState({
+    firstName: "",
+    secondName: "",
     email: "",
     password: "",
     role: "BUYER" as "BUYER" | "SELLER" | "ADMIN",
@@ -20,7 +23,7 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch(`${apiBaseUrl}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -55,6 +58,30 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">First name</label>
+          <input
+            type="text"
+            required
+            value={formData.firstName}
+            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="First name"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Second name</label>
+          <input
+            type="text"
+            required
+            value={formData.secondName}
+            onChange={(e) => setFormData({ ...formData, secondName: e.target.value })}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Second name"
+          />
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">Email</label>
           <input

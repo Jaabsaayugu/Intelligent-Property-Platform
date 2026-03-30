@@ -5,6 +5,8 @@ import { jwtDecode } from "jwt-decode";
 type User = {
   id: string;
   email: string;
+  firstName: string;
+  secondName: string;
   role: "BUYER" | "SELLER" | "ADMIN";
 };
 
@@ -28,6 +30,8 @@ export const useAuthStore = create<AuthState>()(
           sub?: string;
           userId?: string;
           email?: string;
+          firstName?: string;
+          secondName?: string;
           role?: string;
         }>(token);
         set({
@@ -35,6 +39,8 @@ export const useAuthStore = create<AuthState>()(
           user: {
             id: decoded.sub || decoded.userId || "",
             email: decoded.email || "",
+            firstName: decoded.firstName || "",
+            secondName: decoded.secondName || "",
             role: (decoded.role || "BUYER") as "BUYER" | "SELLER" | "ADMIN",
           },
           isAuthenticated: true,
