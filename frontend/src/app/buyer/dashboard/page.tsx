@@ -1,46 +1,28 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 
-const buyerStats = [
-  { label: "Saved homes", value: "18", detail: "4 new matches this week" },
-  { label: "Tours planned", value: "3", detail: "Next visit on Saturday" },
-  { label: "Active offers", value: "2", detail: "1 awaiting seller feedback" },
-];
-
-const buyerMatches = [
-  {
-    title: "Riverside Apartment",
-    meta: "Westlands, Nairobi",
-    price: "KSh 13.5M",
-    note: "Strong location score and recent price adjustment",
-  },
-  {
-    title: "Garden Maisonette",
-    meta: "Lavington, Nairobi",
-    price: "KSh 24M",
-    note: "Fits your 4-bedroom preference and school radius",
-  },
-  {
-    title: "City View Loft",
-    meta: "Kilimani, Nairobi",
-    price: "KSh 9.8M",
-    note: "High-demand listing with updated interiors",
-  },
-];
-
-const buyerTimeline = [
-  { title: "Offer submitted", time: "Today", detail: "Skyline Residency, Unit 4B" },
-  { title: "Viewing confirmed", time: "Tomorrow", detail: "Palm Grove Villas, 10:30 AM" },
-  { title: "New recommendation", time: "2 hours ago", detail: "2 listings added to your shortlist" },
-];
+type BuyerProperty = {
+  id: string;
+  title: string;
+  city: string;
+  address: string;
+  price: number;
+  currency: string;
+  bedrooms?: number | null;
+  propertyType: string;
+  description: string;
+};
 
 export default function BuyerDashboard() {
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
+  const [matches, setMatches] = useState<BuyerProperty[]>([]);
+  const [matchesLoading, setMatchesLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,6 +38,30 @@ export default function BuyerDashboard() {
     return () => clearTimeout(timer);
   }, [router]);
 
+  useEffect(() => {
+    const loadMatches = async () => {
+      setMatchesLoading(true);
+
+      try {
+        const response = await fetch("/api/properties?limit=6");
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Could not load recommended properties");
+        }
+
+        setMatches(data.data ?? []);
+      } catch (error) {
+        console.error("Failed to load buyer recommendations:", error);
+        setMatches([]);
+      } finally {
+        setMatchesLoading(false);
+      }
+    };
+
+    void loadMatches();
+  }, []);
+
   if (isChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -67,6 +73,30 @@ export default function BuyerDashboard() {
   if (!isAuthenticated) {
     return null;
   }
+
+  const buyerStats = [
+    {
+      label: "Recommended homes",
+      value: String(matches.length),
+      detail: matches.length > 0 ? "Freshly published by sellers" : "Waiting for new listings",
+    },
+    {
+      label: "Cities available",
+      value: String(new Set(matches.map((property) => property.city)).size),
+      detail: "Browse active neighborhoods",
+    },
+    {
+      label: "Property types",
+      value: String(new Set(matches.map((property) => property.propertyType)).size),
+      detail: "Apartments, villas, plots, and more",
+    },
+  ];
+
+  const buyerTimeline = matches.slice(0, 3).map((property, index) => ({
+    title: index === 0 ? "New recommendation" : "Listing to review",
+    time: `${index + 1} of ${Math.min(matches.length, 3)}`,
+    detail: `${property.title} in ${property.city}`,
+  }));
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
@@ -86,8 +116,8 @@ export default function BuyerDashboard() {
                 <span className="block text-teal-700">with more confidence and less noise.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Welcome back, {user?.email || "buyer"}. Your search, shortlist,
-                and next actions are all lined up in one calm workspace.
+                Welcome back, {user?.email || "buyer"}. Recommended properties now come
+                directly from listings that sellers have actually added to the platform.
               </p>
             </div>
 
@@ -143,26 +173,49 @@ export default function BuyerDashboard() {
             </div>
 
             <div className="mt-8 grid gap-4">
-              {buyerMatches.map((match, index) => (
-                <div
-                  key={match.title}
-                  className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                        Match {index + 1}
-                      </p>
-                      <h3 className="mt-3 text-2xl font-semibold text-slate-900">
-                        {match.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-slate-500">{match.meta}</p>
-                    </div>
-                    <p className="text-xl font-bold text-teal-700">{match.price}</p>
-                  </div>
-                  <p className="mt-4 text-sm leading-6 text-slate-600">{match.note}</p>
+              {matchesLoading && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 text-sm text-slate-600">
+                  Loading recommendations...
                 </div>
-              ))}
+              )}
+
+              {!matchesLoading && matches.length === 0 && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 text-sm text-slate-600">
+                  No seller listings are available yet.
+                </div>
+              )}
+
+              {!matchesLoading &&
+                matches.map((match, index) => (
+                  <Link
+                    key={match.id}
+                    href={`/properties/${match.id}`}
+                    className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                          Match {index + 1}
+                        </p>
+                        <h3 className="mt-3 text-2xl font-semibold text-slate-900">
+                          {match.title}
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                          {match.address}, {match.city}
+                        </p>
+                      </div>
+                      <p className="text-xl font-bold text-teal-700">
+                        {match.currency} {match.price.toLocaleString()}
+                      </p>
+                    </div>
+                    <p className="mt-4 text-sm leading-6 text-slate-600">
+                      {match.description}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-teal-700">
+                      {match.propertyType} • {match.bedrooms ?? "N/A"} bedrooms • View details
+                    </p>
+                  </Link>
+                ))}
             </div>
           </div>
 
@@ -176,6 +229,12 @@ export default function BuyerDashboard() {
               </h2>
 
               <div className="mt-8 space-y-4">
+                {buyerTimeline.length === 0 && (
+                  <div className="rounded-3xl bg-white/80 px-5 py-4 text-sm text-slate-600">
+                    New seller listings will appear here as they are published.
+                  </div>
+                )}
+
                 {buyerTimeline.map((item) => (
                   <div
                     key={item.title + item.time}
@@ -198,12 +257,11 @@ export default function BuyerDashboard() {
                 Search pulse
               </p>
               <h2 className="mt-3 text-3xl font-semibold">
-                Nairobi apartments are trending upward this week.
+                Open any recommended property to book tours, message sellers, and leave reviews.
               </h2>
               <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
-                Listings matching your budget and preferred neighborhoods are
-                moving faster than usual, so this is a strong moment to review
-                your shortlist.
+                The property detail page now acts as your buyer workspace for
+                requests, conversations, and public feedback on each listing.
               </p>
             </div>
           </div>

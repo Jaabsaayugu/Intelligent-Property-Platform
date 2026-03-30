@@ -75,9 +75,10 @@ function LoginPageContent() {
       let message = "Login failed";
 
       if (axios.isAxiosError(err)) {
-        message =
-          (err.response?.data as { message?: string } | undefined)?.message ||
-          err.message;
+        message = err.response
+          ? ((err.response.data as { message?: string } | undefined)?.message ??
+            "Login failed")
+          : "Cannot reach the login service. Start the backend server and try again.";
       } else if (err instanceof Error) {
         message = err.message;
       } else if (typeof err === "string") {

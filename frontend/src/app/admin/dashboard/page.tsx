@@ -13,12 +13,21 @@ import {
   YAxis,
 } from "recharts";
 
-const stats = [
-  { title: "Total properties", value: "2,847", change: "+12.5%" },
-  { title: "Active listings", value: "1,420", change: "+8.2%" },
-  { title: "Pending approvals", value: "93", change: "-4.1%" },
-  { title: "Total users", value: "15,673", change: "+19.3%" },
-];
+type AdminReview = {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  user: {
+    id: string;
+    email: string;
+  };
+  property: {
+    id: string;
+    title: string;
+    city: string;
+  };
+};
 
 const chartData = [
   { name: "Jan", properties: 400, sales: 2400 },
@@ -28,12 +37,6 @@ const chartData = [
   { name: "May", properties: 189, sales: 4800 },
   { name: "Jun", properties: 239, sales: 3800 },
   { name: "Jul", properties: 349, sales: 4300 },
-];
-
-const approvals = [
-  { id: "PROP-4821", title: "4bd Villa - Westlands", time: "2 hours ago", priority: "High" },
-  { id: "PROP-4819", title: "3bd Apartment - Kilimani", time: "5 hours ago", priority: "Medium" },
-  { id: "PROP-4815", title: "Commercial Plot - Ruaka", time: "Yesterday", priority: "Medium" },
 ];
 
 const alerts = [
@@ -46,6 +49,33 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const loadReviews = async () => {
+    setReviewsLoading(true);
+    setReviewError(null);
+
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await fetch("/api/reviews", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not load reviews");
+      }
+
+      setReviews(data.data ?? []);
+    } catch (error) {
+      console.error("Failed to load reviews:", error);
+      setReviewError("We could not load review moderation data right now.");
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -61,6 +91,12 @@ export default function AdminDashboard() {
     return () => clearTimeout(timer);
   }, [router]);
 
+  useEffect(() => {
+    if (useAuthStore.getState().user?.role === "ADMIN") {
+      void loadReviews();
+    }
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -72,6 +108,45 @@ export default function AdminDashboard() {
   if (!isAuthenticated || user?.role?.toLowerCase() !== "admin") {
     return null;
   }
+
+  const stats = [
+    { title: "Reviews to moderate", value: String(reviews.length), change: "Marketplace feedback queue" },
+    {
+      title: "Five-star reviews",
+      value: String(reviews.filter((review) => review.rating === 5).length),
+      change: "Strong buyer sentiment",
+    },
+    {
+      title: "Recent properties",
+      value: String(new Set(reviews.map((review) => review.property.id)).size),
+      change: "Listings with public feedback",
+    },
+    {
+      title: "Reviewed buyers",
+      value: String(new Set(reviews.map((review) => review.user.id)).size),
+      change: "Distinct buyer voices",
+    },
+  ];
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not delete review");
+      }
+
+      setReviews((current) => current.filter((review) => review.id !== reviewId));
+    } catch (error) {
+      console.error("Failed to delete review:", error);
+      setReviewError("We could not delete that review right now.");
+    }
+  };
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
@@ -91,14 +166,17 @@ export default function AdminDashboard() {
                 <span className="block text-teal-700">trusted, balanced, and moving well.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Welcome back, {user?.email || "administrator"}. Review market
-                signals, moderation load, and operational health in one premium workspace.
+                Welcome back, {user?.email || "administrator"}. Buyer reviews are now
+                visible here, and you can remove any review directly from this moderation panel.
               </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800">
-                Review queue
+              <button
+                onClick={() => void loadReviews()}
+                className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+              >
+                Refresh reviews
               </button>
               <button
                 onClick={logout}
@@ -157,37 +235,63 @@ export default function AdminDashboard() {
 
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-              Pending approvals
+              Review moderation
             </p>
             <h2 className="mt-3 font-display text-3xl text-slate-900">
-              Items needing review
+              Buyer reviews
             </h2>
 
             <div className="mt-8 space-y-4">
-              {approvals.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-slate-900">{item.title}</p>
-                      <p className="mt-2 text-sm text-slate-500">{item.id}</p>
-                    </div>
-                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-                      {item.priority}
-                    </span>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
-                      {item.time}
-                    </p>
-                    <button className="text-sm font-semibold text-teal-700 hover:underline">
-                      Review
-                    </button>
-                  </div>
+              {reviewsLoading && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm text-slate-600">
+                  Loading reviews...
                 </div>
-              ))}
+              )}
+
+              {!reviewsLoading && reviewError && (
+                <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+                  {reviewError}
+                </div>
+              )}
+
+              {!reviewsLoading && !reviewError && reviews.length === 0 && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm text-slate-600">
+                  No property reviews have been submitted yet.
+                </div>
+              )}
+
+              {!reviewsLoading &&
+                !reviewError &&
+                reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 px-5 py-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-semibold text-slate-900">{review.property.title}</p>
+                        <p className="mt-2 text-sm text-slate-500">
+                          {review.user.email} • {review.property.city}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+                        {review.rating}/5
+                      </span>
+                    </div>
+                    <p className="mt-4 text-sm leading-7 text-slate-600">{review.comment}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                        {new Date(review.createdAt).toLocaleString()}
+                      </p>
+                      <button
+                        onClick={() => void handleDeleteReview(review.id)}
+                        className="text-sm font-semibold text-rose-700 hover:underline"
+                      >
+                        Delete review
+                      </button>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </section>
@@ -198,11 +302,11 @@ export default function AdminDashboard() {
               Operations brief
             </p>
             <h2 className="mt-3 text-3xl font-semibold">
-              Moderation is healthy, but queue volume is climbing.
+              Review moderation is now part of the admin workflow.
             </h2>
             <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
-              Your strongest leverage this week is approval throughput. Keeping
-              review speed high will protect listing quality without slowing marketplace momentum.
+              Buyers can leave public property reviews for everyone to read, while
+              administrators can remove unsuitable feedback from this dashboard.
             </p>
           </div>
 

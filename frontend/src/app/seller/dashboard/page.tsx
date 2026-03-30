@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
@@ -13,12 +14,21 @@ import {
   YAxis,
 } from "recharts";
 
-const stats = [
-  { title: "Active listings", value: "7", change: "+2 this month" },
-  { title: "Property views", value: "4,812", change: "+18.4%" },
-  { title: "New inquiries", value: "23", change: "+5 this week" },
-  { title: "Saved by buyers", value: "156", change: "+32%" },
-];
+type SellerProperty = {
+  id: string;
+  title: string;
+  price: number;
+  currency: string;
+  propertyType: string;
+  city: string;
+  bedrooms?: number | null;
+  images: string[];
+  _count?: {
+    reviews: number;
+    tourRequests: number;
+    purchaseRequests: number;
+  };
+};
 
 const viewsOverTime = [
   { name: "Jan", views: 1200 },
@@ -30,21 +40,36 @@ const viewsOverTime = [
 ];
 
 const recentActivity = [
-  { id: "PROP-4821", title: "4bd Villa - Westlands", action: "New inquiry from buyer", time: "2 hours ago", status: "pending" },
-  { id: "PROP-4819", title: "3bd Apartment - Kilimani", action: "Added to favorites (x3)", time: "Yesterday", status: "viewed" },
-  { id: "PROP-4815", title: "Commercial Plot - Ruaka", action: "Listing updated", time: "3 days ago", status: "active" },
-];
-
-const listingPreview = [
-  { title: "Westlands Signature Villa", meta: "KSh 12.5M • 4 Beds", insight: "842 views • 7 inquiries" },
-  { title: "Kilimani Urban Apartment", meta: "KSh 8.9M • 3 Beds", insight: "610 views • 4 inquiries" },
-  { title: "Ruaka Commerce Plot", meta: "KSh 18M • Commercial", insight: "391 views • 3 inquiries" },
+  {
+    id: "seller-focus-1",
+    title: "Keep listing details current",
+    action: "Review tours and purchase requests from each property page.",
+    time: "Action",
+    status: "live",
+  },
+  {
+    id: "seller-focus-2",
+    title: "Respond to buyer messages",
+    action: "Use the property detail page or message center to reply quickly.",
+    time: "Inbox",
+    status: "ready",
+  },
+  {
+    id: "seller-focus-3",
+    title: "Add another listing",
+    action: "Fresh listings improve visibility across the buyer dashboard.",
+    time: "Growth",
+    status: "open",
+  },
 ];
 
 export default function SellerDashboard() {
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [properties, setProperties] = useState<SellerProperty[]>([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
+  const [propertiesError, setPropertiesError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,6 +85,38 @@ export default function SellerDashboard() {
     return () => clearTimeout(timer);
   }, [router]);
 
+  useEffect(() => {
+    const currentUser = useAuthStore.getState().user;
+
+    if (!currentUser?.id || currentUser.role !== "SELLER") {
+      setPropertiesLoading(false);
+      return;
+    }
+
+    const loadProperties = async () => {
+      setPropertiesLoading(true);
+      setPropertiesError(null);
+
+      try {
+        const response = await fetch(`/api/properties?sellerId=${currentUser.id}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Could not load your properties");
+        }
+
+        setProperties(data.data ?? []);
+      } catch (error) {
+        console.error("Failed to load seller properties:", error);
+        setPropertiesError("We could not load your listings right now.");
+      } finally {
+        setPropertiesLoading(false);
+      }
+    };
+
+    void loadProperties();
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -71,6 +128,49 @@ export default function SellerDashboard() {
   if (!isAuthenticated || user?.role?.toLowerCase() !== "seller") {
     return null;
   }
+
+  const totalReviews = properties.reduce(
+    (sum, property) => sum + (property._count?.reviews ?? 0),
+    0
+  );
+  const totalTours = properties.reduce(
+    (sum, property) => sum + (property._count?.tourRequests ?? 0),
+    0
+  );
+  const totalPurchaseRequests = properties.reduce(
+    (sum, property) => sum + (property._count?.purchaseRequests ?? 0),
+    0
+  );
+
+  const stats = [
+    {
+      title: "Active listings",
+      value: String(properties.length),
+      change:
+        properties.length === 1
+          ? "1 property published"
+          : `${properties.length} properties published`,
+    },
+    {
+      title: "Buyer reviews",
+      value: String(totalReviews),
+      change:
+        totalReviews === 1 ? "1 review received" : `${totalReviews} reviews received`,
+    },
+    {
+      title: "Tours planned",
+      value: String(totalTours),
+      change: totalTours === 1 ? "1 tour request" : `${totalTours} tour requests`,
+    },
+    {
+      title: "Purchase requests",
+      value: String(totalPurchaseRequests),
+      change:
+        totalPurchaseRequests === 1
+          ? "1 buyer interested"
+          : `${totalPurchaseRequests} buyer requests`,
+    },
+  ];
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
@@ -90,8 +190,9 @@ export default function SellerDashboard() {
                 <span className="block text-teal-700">from one elevated command center.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Welcome back, {user?.email || "seller"}. Track demand, monitor
-                property performance, and launch your next listing with less friction.
+                Welcome back, {user?.email || "seller"}. Your dashboard now shows
+                only the properties you have actually added, together with the buyer
+                activity attached to them.
               </p>
             </div>
 
@@ -167,7 +268,7 @@ export default function SellerDashboard() {
               Recent activity
             </p>
             <h2 className="mt-3 font-display text-3xl text-slate-900">
-              Signals from the market
+              Seller actions
             </h2>
 
             <div className="mt-8 space-y-4">
@@ -200,12 +301,11 @@ export default function SellerDashboard() {
               Seller insight
             </p>
             <h2 className="mt-3 text-3xl font-semibold">
-              Listings with refreshed photos are converting faster.
+              Every card on the right is one of your actual listings.
             </h2>
             <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
-              Your audience is responding strongest to listings with updated
-              presentation and clear pricing. Consider refreshing underperforming
-              properties this week.
+              Open any property to review buyer messages, plan tours, check purchase
+              requests, and read the reviews attached to that specific house.
             </p>
           </div>
 
@@ -217,18 +317,57 @@ export default function SellerDashboard() {
               Listing overview
             </h2>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {listingPreview.map((listing) => (
-                <div
-                  key={listing.title}
-                  className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
-                >
-                  <div className="mb-4 h-32 rounded-2xl bg-gradient-to-br from-emerald-100 via-white to-sky-100" />
-                  <h3 className="text-lg font-semibold text-slate-900">{listing.title}</h3>
-                  <p className="mt-2 text-sm text-slate-500">{listing.meta}</p>
-                  <p className="mt-4 text-sm leading-6 text-slate-600">{listing.insight}</p>
+            <div className="mt-8">
+              {propertiesLoading && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 text-sm text-slate-600">
+                  Loading your properties...
                 </div>
-              ))}
+              )}
+
+              {!propertiesLoading && propertiesError && (
+                <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
+                  {propertiesError}
+                </div>
+              )}
+
+              {!propertiesLoading && !propertiesError && properties.length === 0 && (
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 text-sm text-slate-600">
+                  You have not added any properties yet.
+                </div>
+              )}
+
+              {!propertiesLoading && !propertiesError && properties.length > 0 && (
+                <div className="grid gap-4 md:grid-cols-3">
+                  {properties.map((property) => (
+                    <Link
+                      key={property.id}
+                      href={`/properties/${property.id}`}
+                      className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+                    >
+                      {property.images?.[0] ? (
+                        <img
+                          src={property.images[0]}
+                          alt={property.title}
+                          className="mb-4 h-32 w-full rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div className="mb-4 h-32 rounded-2xl bg-gradient-to-br from-emerald-100 via-white to-sky-100" />
+                      )}
+                      <h3 className="text-lg font-semibold text-slate-900">{property.title}</h3>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {property.currency} {property.price.toLocaleString()} • {property.bedrooms ?? "N/A"} Beds
+                      </p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {property.propertyType} • {property.city}
+                      </p>
+                      <p className="mt-4 text-sm leading-6 text-slate-600">
+                        {(property._count?.reviews ?? 0)} reviews • {(property._count?.tourRequests ?? 0)} tours •{" "}
+                        {(property._count?.purchaseRequests ?? 0)} purchase requests
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>

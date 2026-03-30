@@ -1,5 +1,4 @@
 import { Controller, UseFormReturn } from "react-hook-form";
-import { X } from "lucide-react";
 import { PropertyFormData } from "@/schemas/property.schema";
 
 type Props = {
@@ -69,7 +68,9 @@ export default function Step5Images({ form }: Props) {
                   onClick={() => removeImage(index)}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
                 >
-                  <X className="h-4 w-4" />
+                  <span aria-hidden="true" className="text-lg leading-none">
+                    x
+                  </span>
                 </button>
               </div>
             )}
