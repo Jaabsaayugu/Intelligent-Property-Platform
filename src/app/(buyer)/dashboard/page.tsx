@@ -9,7 +9,23 @@ export default function BuyerDashboard() {
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-xl font-semibold mb-2">My Messages</h3>
-          <p>Check your conversations...</p>
+          <div className="mb-2">
+            <textarea
+              className="w-full border rounded p-2 mb-2"
+              rows={3}
+              placeholder="Type your message to the seller..."
+            />
+            <button
+              className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+              type="button"
+            >
+              Send
+            </button>
+          </div>
+          {/* Conversation thread would be displayed here */}
+          <div className="bg-gray-50 border rounded p-2 min-h-[60px] text-sm text-gray-700">
+            No messages yet.
+          </div>
         </div>
       </div>
     </div>

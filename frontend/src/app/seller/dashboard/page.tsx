@@ -234,6 +234,25 @@ export default function SellerDashboard() {
         </header>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          {/* Seller conversation area */}
+          <div className="rounded-[2rem] bg-white p-6 shadow mb-8">
+            <h3 className="text-xl font-semibold mb-2">Conversations with Buyers</h3>
+            <textarea
+              className="w-full border rounded p-2 mb-2"
+              rows={3}
+              placeholder="Type your message to the buyer..."
+            />
+            <button
+              className="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800"
+              type="button"
+            >
+              Send
+            </button>
+            {/* Conversation thread would be displayed here */}
+            <div className="bg-gray-50 border rounded p-2 min-h-[60px] text-sm text-gray-700 mt-2">
+              No messages yet.
+            </div>
+          </div>
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
             <div className="flex items-end justify-between gap-4">
               <div>

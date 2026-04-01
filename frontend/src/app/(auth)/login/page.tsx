@@ -58,7 +58,7 @@ function LoginPageContent() {
         message = err.response
           ? ((err.response.data as { message?: string } | undefined)?.message ??
             "Login failed")
-          : "Cannot reach the login service. Start the backend server and try again.";
+          : "Cannot login. Please try again later.";
       } else if (err instanceof Error) {
         message = err.message;
       } else if (typeof err === "string") {
@@ -119,7 +119,7 @@ function LoginPageContent() {
               setFormData({ ...formData, email: e.target.value })
             }
             className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
-            placeholder="you@example.com"
+            placeholder="johndoe@gmail.com.com"
           />
         </div>
 

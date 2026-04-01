@@ -17,6 +17,15 @@ const messageInclude = {
   property: { select: { id: true, title: true } },
 } as const;
 
+type ContactInquiryRow = {
+  id: string;
+  firstName: string;
+  secondName: string;
+  email: string;
+  message: string;
+  createdAt: string;
+};
+
 const getCurrentUser = (req: AuthRequest) => req.user;
 
 const requireAdmin = (req: AuthRequest, res: Response) => {
@@ -69,20 +78,11 @@ export const getContactInquiries = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const inquiries = await prisma.$queryRawUnsafe<
-      Array<{
-        id: string;
-        firstName: string;
-        secondName: string;
-        email: string;
-        message: string;
-        createdAt: string;
-      }>
-    >(`
+    const inquiries = (await prisma.$queryRawUnsafe(`
       SELECT "id", "firstName", "secondName", "email", "message", "createdAt"
       FROM "ContactInquiry"
       ORDER BY "createdAt" DESC
-    `);
+    `)) as ContactInquiryRow[];
 
     res.json({ data: inquiries });
   } catch (error) {
@@ -218,7 +218,7 @@ export const getUserConversations = async (req: AuthRequest, res: Response) => {
     const conversationMap: Record<string, (typeof messages)[number]> = {};
     const userId = currentUser.userId;
 
-    messages.forEach((message) => {
+    messages.forEach((message: (typeof messages)[number]) => {
       const otherUserId = message.senderId === userId ? message.receiverId : message.senderId;
       const key = `${otherUserId}:${message.propertyId ?? "general"}`;
 

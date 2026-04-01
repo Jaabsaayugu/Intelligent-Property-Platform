@@ -43,6 +43,28 @@ const propertyDetailInclude = {
 
 const getRequestUser = (req: AuthRequest) => req.user;
 
+type RawPropertyRow = {
+  id: string;
+  title: string;
+  description: string;
+  propertyType: string;
+  status: string;
+  address: string;
+  city: string;
+  county: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  areaSqm: number | null;
+  yearBuilt: number | null;
+  price: number;
+  currency: string;
+  features: string[] | null;
+  images: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+};
+
 // CREATE PROPERTY (SELLER ONLY)
 export const createProperty = async (req: AuthRequest, res: Response) => {
   try {
@@ -101,94 +123,132 @@ export const createProperty = async (req: AuthRequest, res: Response) => {
 
 // GET ALL PROPERTIES
 export const getProperties = async (req: Request, res: Response) => {
+  const {
+    minPrice,
+    maxPrice,
+    bedrooms,
+    location,
+    city,
+    sortBy = "createdAt",
+    order = "desc",
+    page = "1",
+    limit = "10",
+    sellerId,
+  } = req.query;
+
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const where: any = {};
+
+  if (minPrice || maxPrice) {
+    where.price = {};
+    if (minPrice) where.price.gte = Number(minPrice);
+    if (maxPrice) where.price.lte = Number(maxPrice);
+  }
+
+  if (bedrooms) where.bedrooms = Number(bedrooms);
+
+  if (location) {
+    where.OR = [
+      { address: { contains: String(location), mode: "insensitive" } },
+      { city: { contains: String(location), mode: "insensitive" } },
+      { county: { contains: String(location), mode: "insensitive" } },
+    ];
+  }
+
+  if (city) {
+    where.city = { contains: String(city), mode: "insensitive" };
+  }
+
+  if (sellerId) {
+    where.userId = String(sellerId);
+  }
+
+  const safeSortBy = [
+    "createdAt",
+    "updatedAt",
+    "price",
+    "city",
+    "title",
+    "bedrooms",
+  ].includes(String(sortBy))
+    ? String(sortBy)
+    : "createdAt";
+
   try {
-    const {
-      minPrice,
-      maxPrice,
-      bedrooms,
-      location,
-      city,
-      sortBy = "createdAt",
-      order = "desc",
-      page = "1",
-      limit = "10",
-      sellerId,
-    } = req.query;
-
-    const pageNumber = Number(page);
-    const limitNumber = Number(limit);
-    const skip = (pageNumber - 1) * limitNumber;
-
-    const where: any = {};
-
-    if (minPrice || maxPrice) {
-      where.price = {};
-      if (minPrice) where.price.gte = Number(minPrice);
-      if (maxPrice) where.price.lte = Number(maxPrice);
-    }
-
-    if (bedrooms) where.bedrooms = Number(bedrooms);
-
-    if (location) {
-      where.OR = [
-        { address: { contains: String(location), mode: "insensitive" } },
-        { city: { contains: String(location), mode: "insensitive" } },
-        { county: { contains: String(location), mode: "insensitive" } },
-      ];
-    }
-
-    if (city) {
-      where.city = { contains: String(city), mode: "insensitive" };
-    }
-
-    if (sellerId) {
-      where.userId = String(sellerId);
-    }
-
     let properties: any[] = [];
 
     try {
       properties = await prisma.property.findMany({
         where,
         include: propertyListInclude as any,
-        orderBy: { [sortBy as string]: order === "asc" ? "asc" : "desc" },
+        orderBy: { [safeSortBy]: order === "asc" ? "asc" : "desc" },
         skip,
         take: limitNumber,
       });
     } catch (relationError) {
       console.error("Property list include failed, falling back to base query:", relationError);
 
-      const baseProperties = await prisma.property.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              firstName: true,
-              secondName: true,
+      try {
+        const baseProperties = await prisma.property.findMany({
+          where,
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                firstName: true,
+                secondName: true,
+              },
             },
-          },
-        } as any,
-        orderBy: { [sortBy as string]: order === "asc" ? "asc" : "desc" },
-        skip,
-        take: limitNumber,
-      });
+          } as any,
+          orderBy: { [safeSortBy]: order === "asc" ? "asc" : "desc" },
+          skip,
+          take: limitNumber,
+        });
 
-      properties = baseProperties.map((property) => ({
-        ...property,
-        _count: {
-          reviews: 0,
-          tourRequests: 0,
-          purchaseRequests: 0,
-        },
-      }));
+        properties = baseProperties.map((property: any) => ({
+          ...property,
+          _count: {
+            reviews: 0,
+            tourRequests: 0,
+            purchaseRequests: 0,
+          },
+        }));
+      } catch (baseQueryError) {
+        console.error("Base property query failed, falling back to plain properties:", baseQueryError);
+
+        const plainProperties = await prisma.property.findMany({
+          where,
+          orderBy: { [safeSortBy]: order === "asc" ? "asc" : "desc" },
+          skip,
+          take: limitNumber,
+        });
+
+        properties = plainProperties.map((property: any) => ({
+          ...property,
+          user: null,
+          _count: {
+            reviews: 0,
+            tourRequests: 0,
+            purchaseRequests: 0,
+          },
+        }));
+      }
     }
 
-    const total = await prisma.property.count({ where });
+    let total = properties.length;
 
-    res.json({
+    try {
+      total = await prisma.property.count({ where });
+    } catch (countError) {
+      console.error("Property count failed, using current page length:", countError);
+    }
+
+    return res.json({
       data: properties,
       meta: {
         total,
@@ -198,8 +258,60 @@ export const getProperties = async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Could not fetch properties" });
+    console.error("Prisma property query failed, falling back to raw SQL:", err);
+
+    try {
+      const rawProperties = (await prisma.$queryRawUnsafe(`
+        SELECT *
+        FROM "Property"
+        ORDER BY "${safeSortBy}" ${order === "asc" ? "ASC" : "DESC"}
+        LIMIT ${limitNumber}
+        OFFSET ${skip}
+      `)) as RawPropertyRow[];
+
+      const filteredProperties = rawProperties.filter((property: RawPropertyRow) => {
+        if (sellerId && property.userId !== String(sellerId)) return false;
+        if (bedrooms && Number(property.bedrooms ?? 0) !== Number(bedrooms)) return false;
+        if (minPrice && Number(property.price) < Number(minPrice)) return false;
+        if (maxPrice && Number(property.price) > Number(maxPrice)) return false;
+        if (
+          city &&
+          !String(property.city ?? "")
+            .toLowerCase()
+            .includes(String(city).toLowerCase())
+        ) {
+          return false;
+        }
+        if (location) {
+          const haystack = `${property.address ?? ""} ${property.city ?? ""} ${property.county ?? ""}`.toLowerCase();
+          if (!haystack.includes(String(location).toLowerCase())) return false;
+        }
+        return true;
+      });
+
+      return res.json({
+        data: filteredProperties.map((property: RawPropertyRow) => ({
+          ...property,
+          features: property.features ?? [],
+          images: property.images ?? [],
+          user: null,
+          _count: {
+            reviews: 0,
+            tourRequests: 0,
+            purchaseRequests: 0,
+          },
+        })),
+        meta: {
+          total: filteredProperties.length,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.max(1, Math.ceil(filteredProperties.length / limitNumber)),
+        },
+      });
+    } catch (rawError) {
+      console.error("Raw property fallback failed:", rawError);
+      return res.status(500).json({ message: "Could not fetch properties" });
+    }
   }
 };
 
