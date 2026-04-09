@@ -254,7 +254,7 @@ export default function Step5Images({ form }: Props) {
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         className={`rounded-[1.5rem] border-2 border-dashed p-12 text-center transition-all ${
-          dragging ? "border-teal-500 bg-teal-50" : "border-slate-300 bg-slate-50/80"
+          dragging ? "border-[#0f2747] bg-[#e8eef8]" : "border-slate-300 bg-slate-50/80"
         }`}
       >
         <p className="text-slate-500 mb-4">Drag and drop images or videos here</p>
@@ -262,7 +262,7 @@ export default function Step5Images({ form }: Props) {
           type="button"
           onClick={openCloudinaryWidget}
           disabled={media.length >= 20 || isUploading}
-          className="rounded-full bg-teal-600 px-8 py-3.5 text-white font-semibold hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-full bg-[#0f2747] px-8 py-3.5 font-semibold text-white hover:bg-[#0b1d35] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isUploading 
             ? `Uploading... ${uploadProgress}%` 
@@ -331,7 +331,7 @@ export default function Step5Images({ form }: Props) {
           type="button"
           onClick={openCloudinaryWidget}
           disabled={media.length >= 20 || isUploading}
-          className="rounded-full border border-slate-900/10 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="rounded-full bg-[#0f2747] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0b1d35] disabled:opacity-50"
         >
           📤 Upload More Media ({media.length}/20)
         </button>
@@ -339,7 +339,7 @@ export default function Step5Images({ form }: Props) {
         <button
           type="button"
           onClick={addExternalUrl}
-          className="rounded-full border border-slate-900/10 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-full border border-[#0f2747]/20 bg-white px-6 py-3 text-sm font-semibold text-[#0f2747] hover:bg-[#e8eef8]"
         >
           + Add YouTube / External URL
         </button>

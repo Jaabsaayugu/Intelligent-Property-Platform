@@ -61,7 +61,7 @@ export default function Step6ReviewSubmit({ form, isSubmitting }: Props) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full bg-[#0f2747] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0b1d35] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Submitting..." : "Ready to publish"}
           </button>

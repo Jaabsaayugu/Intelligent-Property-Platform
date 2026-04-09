@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { getDisplayName } from "@/lib/display-name";
 import api from "@/lib/axios";
+import AppBackdrop from "@/components/layout/AppBackdrop";
 
 type AdminReview = {
   id: string;
@@ -262,9 +263,7 @@ export default function AdminDashboard() {
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
-      <div className="absolute inset-0 soft-grid opacity-35" />
-      <div className="absolute left-[8%] top-20 h-56 w-56 rounded-full bg-sky-300/25 blur-3xl" />
-      <div className="absolute right-[8%] top-10 h-64 w-64 rounded-full bg-emerald-300/25 blur-3xl" />
+      <AppBackdrop photoUrl="https://images.pexels.com/photos/17999591/pexels-photo-17999591.jpeg" />
 
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-4 flex justify-end">
@@ -301,7 +300,7 @@ export default function AdminDashboard() {
           <div className="mt-6 flex justify-start lg:justify-end">
             <button
               onClick={() => void loadDashboardData()}
-              className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+              className="rounded-full bg-[#0f2747] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0b1d35]"
             >
               {refreshing ? "Refreshing..." : "Refresh dashboard"}
             </button>
@@ -558,7 +557,7 @@ export default function AdminDashboard() {
                   <button
                     type="submit"
                     disabled={savingProperty}
-                    className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                    className="rounded-full bg-[#0f2747] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {savingProperty ? "Saving..." : "Save changes"}
                   </button>

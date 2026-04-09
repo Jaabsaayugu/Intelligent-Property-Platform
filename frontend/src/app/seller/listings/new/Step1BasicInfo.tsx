@@ -104,7 +104,7 @@ export default function Step1BasicInfo({ form }: Props) {
                     onClick={() => field.onChange(option.value)}
                     className={`rounded-[1.5rem] border px-5 py-4 text-left transition ${
                       active
-                        ? "border-teal-700 bg-teal-50 shadow-[0_12px_30px_-20px_rgba(15,118,110,0.75)]"
+                        ? "border-[#0f2747] bg-[#e8eef8] shadow-[0_12px_30px_-20px_rgba(15,39,71,0.75)]"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >

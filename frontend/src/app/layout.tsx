@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import GlobalBrandBadge from "@/components/branding/GlobalBrandBadge";
+import SessionBootstrap from "@/components/auth/SessionBootstrap";
 
 export const metadata: Metadata = {
   title: "AfREALTY DATAHOMES",
@@ -22,7 +24,11 @@ export default function RootLayout({
         } as React.CSSProperties
       }
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <SessionBootstrap />
+        <GlobalBrandBadge />
+        {children}
+      </body>
     </html>
   );
 }

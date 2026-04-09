@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import AppBackdrop from "@/components/layout/AppBackdrop";
+import PropertyMapPanel from "@/components/maps/PropertyMapPanel";
 import api from "@/lib/axios";
 import { getDisplayName } from "@/lib/display-name";
 import { useAuthStore } from "@/store/auth.store";
@@ -29,6 +31,8 @@ type PropertyDetail = {
   address: string;
   city: string;
   county?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   areaSqm?: number | null;
@@ -164,12 +168,12 @@ export default function PropertyDetailsPage() {
     }
   };
 
-  const loadConversation = async (sellerId: string) => {
+  const loadConversation = async (nextSellerId: string) => {
     setConversationLoading(true);
 
     try {
       const response = await api.get<{ data: Message[] }>(
-        `/messages/conversation/${sellerId}?propertyId=${propertyId}`
+        `/messages/conversation/${nextSellerId}?propertyId=${propertyId}`
       );
       setConversation(response.data.data ?? []);
     } catch (fetchError) {
@@ -317,7 +321,7 @@ export default function PropertyDetailsPage() {
   if (!hasMounted || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-teal-700" />
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-[#0f2747]" />
       </div>
     );
   }
@@ -333,24 +337,23 @@ export default function PropertyDetailsPage() {
   }
 
   const reviews = property.reviews ?? [];
+  const fullAddress = [property.address, property.city, property.county].filter(Boolean).join(", ");
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
-      <div className="absolute inset-0 soft-grid opacity-35" />
-      <div className="absolute left-[8%] top-20 h-56 w-56 rounded-full bg-emerald-300/25 blur-3xl" />
-      <div className="absolute right-[8%] top-10 h-64 w-64 rounded-full bg-sky-300/25 blur-3xl" />
+      <AppBackdrop />
 
       <div className="relative mx-auto max-w-7xl space-y-6">
         <section className="hero-panel rounded-[2rem] border border-white/60 px-6 py-6 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.55)] sm:px-8">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-800/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#17365d]/80">
                 Property details
               </p>
               <h1 className="mt-4 font-display text-4xl leading-none text-slate-900 sm:text-5xl">
                 {property.title}
               </h1>
-              <p className="mt-5 text-lg font-semibold text-teal-700">
+              <p className="mt-5 text-lg font-semibold text-[#0f2747]">
                 {property.currency} {property.price.toLocaleString()}
               </p>
               <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
@@ -360,9 +363,7 @@ export default function PropertyDetailsPage() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-3xl bg-white/75 px-5 py-4">
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Location</p>
-                  <p className="mt-2 font-semibold text-slate-900">
-                    {property.address}, {property.city}
-                  </p>
+                  <p className="mt-2 font-semibold text-slate-900">{fullAddress}</p>
                 </div>
                 <div className="rounded-3xl bg-white/75 px-5 py-4">
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Type</p>
@@ -392,6 +393,13 @@ export default function PropertyDetailsPage() {
           </div>
         </section>
 
+        <PropertyMapPanel
+          title={property.title}
+          address={fullAddress}
+          latitude={property.latitude}
+          longitude={property.longitude}
+        />
+
         {actionMessage && (
           <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-700">
             {actionMessage}
@@ -401,7 +409,7 @@ export default function PropertyDetailsPage() {
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
             <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                 Seller
               </p>
               <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -414,20 +422,24 @@ export default function PropertyDetailsPage() {
                 Listing status: <span className="capitalize">{property.status}</span>
               </p>
 
-              {canActAsBuyer && (
+              {(canActAsBuyer || isOwner) && (
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
-                    href={`/messages?withUserId=${property.user.id}&propertyId=${property.id}`}
-                    className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
+                    href={
+                      isOwner
+                        ? "/messages"
+                        : `/messages?withUserId=${property.user.id}&propertyId=${property.id}`
+                    }
+                    className="rounded-full bg-[#0f2747] px-5 py-3 text-sm font-semibold text-white"
                   >
-                    Open full message center
+                    {isOwner ? "Open seller inbox" : "Open full message center"}
                   </Link>
                 </div>
               )}
             </div>
 
             <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                 Reviews
               </p>
               <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -464,7 +476,7 @@ export default function PropertyDetailsPage() {
                     <select
                       value={reviewRating}
                       onChange={(event) => setReviewRating(Number(event.target.value))}
-                      className="mt-2 block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                      className="mt-2 block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
                     >
                       {[5, 4, 3, 2, 1].map((rating) => (
                         <option key={rating} value={rating}>
@@ -479,10 +491,10 @@ export default function PropertyDetailsPage() {
                       value={reviewComment}
                       onChange={(event) => setReviewComment(event.target.value)}
                       rows={4}
-                      className="mt-2 block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3"
+                      className="mt-2 block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
                     />
                   </div>
-                  <button className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white">
+                  <button className="rounded-full bg-[#0f2747] px-5 py-3 text-sm font-semibold text-white">
                     Save review
                   </button>
                 </form>
@@ -494,7 +506,7 @@ export default function PropertyDetailsPage() {
             {canActAsBuyer && (
               <>
                 <form onSubmit={handleTourSubmit} className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                     Tour planning
                   </p>
                   <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -505,23 +517,23 @@ export default function PropertyDetailsPage() {
                       type="datetime-local"
                       value={tourDate}
                       onChange={(event) => setTourDate(event.target.value)}
-                      className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                      className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
                     />
                     <textarea
                       value={tourNotes}
                       onChange={(event) => setTourNotes(event.target.value)}
                       rows={3}
                       placeholder="Any timing notes or questions for the seller"
-                      className="block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3"
+                      className="block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
                     />
-                    <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white">
+                    <button className="rounded-full bg-[#0f2747] px-5 py-3 text-sm font-semibold text-white">
                       Request tour
                     </button>
                   </div>
                 </form>
 
                 <form onSubmit={handlePurchaseSubmit} className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                     Purchase booking
                   </p>
                   <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -533,23 +545,23 @@ export default function PropertyDetailsPage() {
                       value={offerAmount}
                       onChange={(event) => setOfferAmount(event.target.value)}
                       placeholder="Offer amount"
-                      className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                      className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
                     />
                     <textarea
                       value={purchaseMessage}
                       onChange={(event) => setPurchaseMessage(event.target.value)}
                       rows={3}
                       placeholder="Share financing, timelines, or purchase notes"
-                      className="block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3"
+                      className="block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
                     />
-                    <button className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white">
+                    <button className="rounded-full bg-[#0f2747] px-5 py-3 text-sm font-semibold text-white">
                       Send purchase request
                     </button>
                   </div>
                 </form>
 
                 <form onSubmit={handleMessageSubmit} className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                     Buyer and seller chat
                   </p>
                   <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -577,7 +589,7 @@ export default function PropertyDetailsPage() {
                           key={message.id}
                           className={`rounded-[1.5rem] px-4 py-3 text-sm leading-6 ${
                             isCurrentUser
-                              ? "ml-8 bg-teal-700 text-white"
+                              ? "ml-8 bg-[#0f2747] text-white"
                               : "mr-8 bg-white/80 text-slate-700"
                           }`}
                         >
@@ -596,9 +608,9 @@ export default function PropertyDetailsPage() {
                       onChange={(event) => setMessageDraft(event.target.value)}
                       rows={3}
                       placeholder="Ask about availability, payment terms, or the neighborhood"
-                      className="block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3"
+                      className="block w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
                     />
-                    <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white">
+                    <button className="rounded-full bg-[#0f2747] px-5 py-3 text-sm font-semibold text-white">
                       Send message
                     </button>
                   </div>
@@ -609,12 +621,22 @@ export default function PropertyDetailsPage() {
             {isOwner && (
               <>
                 <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-                    Tour requests
-                  </p>
-                  <h2 className="mt-3 font-display text-3xl text-slate-900">
-                    Buyer visits
-                  </h2>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
+                        Tour requests
+                      </p>
+                      <h2 className="mt-3 font-display text-3xl text-slate-900">
+                        Buyer visits
+                      </h2>
+                    </div>
+                    <Link
+                      href="/messages"
+                      className="rounded-full bg-[#0f2747] px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      Open inbox
+                    </Link>
+                  </div>
                   <div className="mt-6 space-y-3">
                     {tourRequests.length === 0 && (
                       <div className="rounded-[1.5rem] bg-white/80 p-4 text-sm text-slate-600">
@@ -634,7 +656,7 @@ export default function PropertyDetailsPage() {
                 </div>
 
                 <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                     Purchase requests
                   </p>
                   <h2 className="mt-3 font-display text-3xl text-slate-900">

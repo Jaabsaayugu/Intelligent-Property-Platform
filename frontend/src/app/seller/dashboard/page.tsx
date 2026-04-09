@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/auth.store";
-import { getDisplayName } from "@/lib/display-name";
+import AppBackdrop from "@/components/layout/AppBackdrop";
+import MessageWorkspace from "@/components/messages/MessageWorkspace";
 import api from "@/lib/axios";
+import { getDisplayName } from "@/lib/display-name";
+import { useAuthStore } from "@/store/auth.store";
 import {
   CartesianGrid,
   Line,
@@ -52,7 +54,7 @@ const recentActivity = [
   {
     id: "seller-focus-2",
     title: "Respond to buyer messages",
-    action: "Use the property detail page or message center to reply quickly.",
+    action: "Use the seller inbox below or the full message center for faster replies.",
     time: "Inbox",
     status: "ready",
   },
@@ -118,7 +120,7 @@ export default function SellerDashboard() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-teal-700" />
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-[#0f2747]" />
       </div>
     );
   }
@@ -172,9 +174,7 @@ export default function SellerDashboard() {
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
-      <div className="absolute inset-0 soft-grid opacity-35" />
-      <div className="absolute left-[8%] top-20 h-56 w-56 rounded-full bg-emerald-300/25 blur-3xl" />
-      <div className="absolute right-[8%] top-10 h-64 w-64 rounded-full bg-amber-200/25 blur-3xl" />
+      <AppBackdrop photoUrl="https://images.pexels.com/photos/17999591/pexels-photo-17999591.jpeg" />
 
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-4 flex justify-end">
@@ -194,16 +194,16 @@ export default function SellerDashboard() {
         <header className="hero-panel rounded-[2rem] border border-white/60 px-6 py-6 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.55)] sm:px-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-800/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#17365d]/80">
                 Seller Dashboard
               </p>
               <h1 className="mt-4 font-display text-4xl leading-none text-slate-900 sm:text-5xl">
                 Grow listing momentum
-                <span className="block text-teal-700">from one elevated command center.</span>
+                <span className="block text-[#0f2747]">from one elevated command center.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Your dashboard now shows only the properties you have actually added,
-                together with the buyer activity attached to them.
+                Your dashboard now shows only the properties you have added, together
+                with the buyer activity and message threads attached to them.
               </p>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function SellerDashboard() {
           <div className="mt-6 flex justify-start lg:justify-end">
             <button
               onClick={() => router.push("/seller/listings/new")}
-              className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+              className="rounded-full bg-[#0f2747] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0b1d35]"
             >
               Add new property
             </button>
@@ -233,37 +233,22 @@ export default function SellerDashboard() {
           </div>
         </header>
 
+        <section className="mt-8">
+          <MessageWorkspace compact heading="Buyer inbox" subheading="Conversations" />
+        </section>
+
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          {/* Seller conversation area */}
-          <div className="rounded-[2rem] bg-white p-6 shadow mb-8">
-            <h3 className="text-xl font-semibold mb-2">Conversations with Buyers</h3>
-            <textarea
-              className="w-full border rounded p-2 mb-2"
-              rows={3}
-              placeholder="Type your message to the buyer..."
-            />
-            <button
-              className="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800"
-              type="button"
-            >
-              Send
-            </button>
-            {/* Conversation thread would be displayed here */}
-            <div className="bg-gray-50 border rounded p-2 min-h-[60px] text-sm text-gray-700 mt-2">
-              No messages yet.
-            </div>
-          </div>
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                   Market attention
                 </p>
                 <h2 className="mt-3 font-display text-3xl text-slate-900">
                   Property views over time
                 </h2>
               </div>
-              <span className="rounded-full bg-teal-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-teal-700">
+              <span className="rounded-full bg-[#e8eef8] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#0f2747]">
                 Last 6 months
               </span>
             </div>
@@ -278,7 +263,7 @@ export default function SellerDashboard() {
                   <Line
                     type="monotone"
                     dataKey="views"
-                    stroke="#0f766e"
+                    stroke="#0f2747"
                     strokeWidth={3}
                     name="Total views"
                   />
@@ -288,7 +273,7 @@ export default function SellerDashboard() {
           </div>
 
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
               Recent activity
             </p>
             <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -329,17 +314,27 @@ export default function SellerDashboard() {
             </h2>
             <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
               Open any property to review buyer messages, plan tours, check purchase
-              requests, and read the reviews attached to that specific house.
+              requests, read reviews, and inspect the shared map context for that listing.
             </p>
           </div>
 
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-              My properties
-            </p>
-            <h2 className="mt-3 font-display text-3xl text-slate-900">
-              Listing overview
-            </h2>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
+                  My properties
+                </p>
+                <h2 className="mt-3 font-display text-3xl text-slate-900">
+                  Listing overview
+                </h2>
+              </div>
+              <Link
+                href="/messages"
+                className="rounded-full bg-[#0f2747] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0b1d35]"
+              >
+                Open inbox
+              </Link>
+            </div>
 
             <div className="mt-8">
               {propertiesLoading && (
@@ -379,13 +374,13 @@ export default function SellerDashboard() {
                       )}
                       <h3 className="text-lg font-semibold text-slate-900">{property.title}</h3>
                       <p className="mt-2 text-sm text-slate-500">
-                        {property.currency} {property.price.toLocaleString()} • {property.bedrooms ?? "N/A"} Beds
+                        {property.currency} {property.price.toLocaleString()} | {property.bedrooms ?? "N/A"} Beds
                       </p>
                       <p className="mt-2 text-sm text-slate-500">
-                        {property.propertyType} • {property.city}
+                        {property.propertyType} | {property.city}
                       </p>
                       <p className="mt-4 text-sm leading-6 text-slate-600">
-                        {(property._count?.reviews ?? 0)} reviews • {(property._count?.tourRequests ?? 0)} tours •{" "}
+                        {(property._count?.reviews ?? 0)} reviews | {(property._count?.tourRequests ?? 0)} tours |{" "}
                         {(property._count?.purchaseRequests ?? 0)} purchase requests
                       </p>
                     </Link>

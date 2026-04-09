@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/store/auth.store";
-import { getDisplayName } from "@/lib/display-name";
+import AppBackdrop from "@/components/layout/AppBackdrop";
 import api from "@/lib/axios";
+import { getDisplayName } from "@/lib/display-name";
+import { useAuthStore } from "@/store/auth.store";
 
 type BuyerProperty = {
   id: string;
@@ -25,6 +26,7 @@ export default function BuyerDashboard() {
   const [isChecking, setIsChecking] = useState(true);
   const [matches, setMatches] = useState<BuyerProperty[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(true);
+  const [propertyFact, setPropertyFact] = useState("Loading a property fact...");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -58,10 +60,25 @@ export default function BuyerDashboard() {
     void loadMatches();
   }, []);
 
+  useEffect(() => {
+    const loadFact = async () => {
+      try {
+        const response = await fetch("/api/property-facts");
+        const data = (await response.json()) as { fact?: string };
+        setPropertyFact(data.fact || "Property details shape buyer confidence.");
+      } catch (error) {
+        console.error("Failed to load property fact:", error);
+        setPropertyFact("Property details shape buyer confidence.");
+      }
+    };
+
+    void loadFact();
+  }, []);
+
   if (isChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-teal-700" />
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-[#0f2747]" />
       </div>
     );
   }
@@ -96,20 +113,7 @@ export default function BuyerDashboard() {
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
-      <div
-        className="absolute inset-y-0 left-0 w-full sm:w-[60%] lg:w-[42%]"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, rgba(255,253,248,0.16) 0%, rgba(255,253,248,0.6) 68%, rgba(255,253,248,0.9) 100%), url('https://images.pexels.com/photos/17999591/pexels-photo-17999591.jpeg')",
-          backgroundPosition: "center left",
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "cover",
-          opacity: 0.46,
-        }}
-      />
-      <div className="absolute inset-0 soft-grid opacity-35" />
-      <div className="absolute left-[8%] top-20 h-56 w-56 rounded-full bg-emerald-300/25 blur-3xl" />
-      <div className="absolute right-[10%] top-10 h-64 w-64 rounded-full bg-sky-300/25 blur-3xl" />
+      <AppBackdrop photoUrl="https://images.pexels.com/photos/17999591/pexels-photo-17999591.jpeg" />
 
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-4 flex justify-end">
@@ -129,15 +133,15 @@ export default function BuyerDashboard() {
         <header className="hero-panel rounded-[2rem] border border-white/60 px-6 py-6 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.55)] sm:px-8">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-800/70">
-                Your Dashboard
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#17365d]/80">
+                My Dashboard
               </p>
               <h1 className="mt-4 font-display text-4xl leading-none text-slate-900 sm:text-5xl">
-                Find Your Next Move with Greater Clarity
+                Find own Lovely Property with us by Trusted Property Vendors
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Browse verified properties directly from sellers — backed by intelligent
-                insights and transparent data.
+                Browse verified properties directly from sellers with cleaner insight,
+                clearer messaging, and location context you can trust.
               </p>
             </div>
 
@@ -155,7 +159,7 @@ export default function BuyerDashboard() {
           <div className="mt-6 flex justify-start lg:justify-end">
             <button
               onClick={() => router.push("/buyer/properties")}
-              className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+              className="rounded-full bg-[#0f2747] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0b1d35]"
             >
               Browse properties
             </button>
@@ -181,7 +185,7 @@ export default function BuyerDashboard() {
           <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                   Recommended for you
                 </p>
                 <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -190,7 +194,7 @@ export default function BuyerDashboard() {
               </div>
               <button
                 onClick={() => router.push("/buyer/properties")}
-                className="text-sm font-semibold text-teal-700 hover:underline"
+                className="text-sm font-semibold text-[#0f2747] hover:underline"
               >
                 View all
               </button>
@@ -228,15 +232,15 @@ export default function BuyerDashboard() {
                           {match.address}, {match.city}
                         </p>
                       </div>
-                      <p className="text-xl font-bold text-teal-700">
+                      <p className="text-xl font-bold text-[#0f2747]">
                         {match.currency} {match.price.toLocaleString()}
                       </p>
                     </div>
                     <p className="mt-4 text-sm leading-6 text-slate-600">
                       {match.description}
                     </p>
-                    <p className="mt-3 text-sm font-semibold text-teal-700">
-                      {match.propertyType} • {match.bedrooms ?? "N/A"} bedrooms • View details
+                    <p className="mt-3 text-sm font-semibold text-[#0f2747]">
+                      {match.propertyType} | {match.bedrooms ?? "N/A"} bedrooms | View details
                     </p>
                   </Link>
                 ))}
@@ -245,7 +249,7 @@ export default function BuyerDashboard() {
 
           <div className="space-y-6">
             <div className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
                 Next actions
               </p>
               <h2 className="mt-3 font-display text-3xl text-slate-900">
@@ -266,7 +270,7 @@ export default function BuyerDashboard() {
                   >
                     <div className="flex items-center justify-between gap-4">
                       <p className="font-semibold text-slate-900">{item.title}</p>
-                      <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
+                      <span className="rounded-full bg-[#e8eef8] px-3 py-1 text-xs font-semibold text-[#0f2747]">
                         {item.time}
                       </span>
                     </div>
@@ -278,14 +282,13 @@ export default function BuyerDashboard() {
 
             <div className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-[0_28px_80px_-45px_rgba(15,23,42,0.8)] sm:p-8">
               <p className="text-sm uppercase tracking-[0.28em] text-emerald-300">
-                Search pulse
+                Property facts API
               </p>
               <h2 className="mt-3 text-3xl font-semibold">
-                Open any recommended property to book tours, message sellers, and leave reviews.
+                Random property fact
               </h2>
               <p className="mt-4 max-w-md text-sm leading-7 text-white/75">
-                The property detail page now acts as your buyer workspace for
-                requests, conversations, and public feedback on each listing.
+                {propertyFact}
               </p>
             </div>
           </div>

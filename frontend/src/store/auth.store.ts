@@ -18,6 +18,17 @@ type AuthState = {
   logout: () => void;
 };
 
+const decodeAuthToken = (token: string) =>
+  jwtDecode<{
+    sub?: string;
+    userId?: string;
+    email?: string;
+    firstName?: string;
+    secondName?: string;
+    role?: string;
+    exp?: number;
+  }>(token);
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -26,14 +37,12 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: (token: string) => {
-        const decoded = jwtDecode<{
-          sub?: string;
-          userId?: string;
-          email?: string;
-          firstName?: string;
-          secondName?: string;
-          role?: string;
-        }>(token);
+        const decoded = decodeAuthToken(token);
+
+        if (decoded.exp && decoded.exp * 1000 <= Date.now()) {
+          throw new Error("Your session has expired. Please sign in again.");
+        }
+
         set({
           token,
           user: {
@@ -56,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "ipppr-auth-storage",
-      partialize: (state) => ({ token: state.token }), // only persist token
+      partialize: (state) => ({ token: state.token }),
     }
   )
 );

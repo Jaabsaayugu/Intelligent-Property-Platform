@@ -11,8 +11,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       default: "bg-primary text-primary-foreground hover:bg-primary/90",
-      outline: "border border-input hover:bg-accent hover:text-accent-foreground",
-      ghost: "hover:bg-accent hover:text-accent-foreground",
+      outline: "border border-[#0f2747]/20 text-[#0f2747] hover:bg-[#e8eef8] hover:text-[#0f2747]",
+      ghost: "text-[#0f2747] hover:bg-[#e8eef8] hover:text-[#0f2747]",
     };
 
     return (

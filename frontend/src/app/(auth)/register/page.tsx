@@ -12,6 +12,7 @@ export default function RegisterPage() {
     secondName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     role: "BUYER" as "BUYER" | "SELLER" | "ADMIN",
   });
   const [loading, setLoading] = useState(false);
@@ -22,11 +23,23 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
 
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${apiBaseUrl}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          secondName: formData.secondName,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
       });
 
       if (!res.ok) {
@@ -132,6 +145,21 @@ export default function RegisterPage() {
         </div>
 
         <div>
+          <label className="mb-2 block text-sm font-medium text-slate-800">
+            Confirm password
+          </label>
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#0f2747] focus:ring-4 focus:ring-[#dbe7f7]"
+            placeholder="Retype your password"
+          />
+        </div>
+
+        <div>
           <label className="mb-2 block text-sm font-medium text-slate-800">I want to be a...</label>
           <select
             value={formData.role}
@@ -155,7 +183,7 @@ export default function RegisterPage() {
           className={`w-full rounded-full px-4 py-3.5 text-base font-semibold text-white transition duration-200 ${
             loading
               ? "cursor-not-allowed bg-slate-500"
-              : "bg-slate-900 shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 hover:bg-[#0d2240] active:bg-slate-950"
+              : "bg-[#0f2747] shadow-lg shadow-[#0f2747]/20 hover:-translate-y-0.5 hover:bg-[#0b1d35] active:bg-[#08162a]"
           }`}
         >
           {loading ? "Creating account..." : "Create account"}

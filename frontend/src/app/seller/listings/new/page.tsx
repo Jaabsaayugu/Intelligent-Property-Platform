@@ -87,6 +87,10 @@ export default function NewPropertyPage() {
       address: "",
       city: "",
       county: undefined,
+      subCounty: "",
+      ward: "",
+      area: "",
+      exactLocation: "",
       latitude: undefined,
       longitude: undefined,
       bedrooms: undefined,
@@ -123,7 +127,17 @@ export default function NewPropertyPage() {
         break;
       case 2:
         currentSchema = step2Schema;
-        fieldsToValidate = ["address", "city", "county", "latitude", "longitude"];
+        fieldsToValidate = [
+          "address",
+          "city",
+          "county",
+          "subCounty",
+          "ward",
+          "area",
+          "exactLocation",
+          "latitude",
+          "longitude",
+        ];
         break;
       case 3:
         currentSchema = step3Schema;
@@ -147,6 +161,10 @@ export default function NewPropertyPage() {
           "address",
           "city",
           "county",
+          "subCounty",
+          "ward",
+          "area",
+          "exactLocation",
           "latitude",
           "longitude",
           "bedrooms",
@@ -169,6 +187,10 @@ export default function NewPropertyPage() {
           "address",
           "city",
           "county",
+          "subCounty",
+          "ward",
+          "area",
+          "exactLocation",
           "latitude",
           "longitude",
           "bedrooms",
@@ -211,7 +233,14 @@ export default function NewPropertyPage() {
 
     if (isLastStep) {
       try {
-        await api.post("/properties", values);
+        const {
+          subCounty: _subCounty,
+          ward: _ward,
+          area: _area,
+          exactLocation: _exactLocation,
+          ...payload
+        } = values;
+        await api.post("/properties", payload);
         reset();
         router.push("/seller/dashboard?success=true");
       } catch (err) {
@@ -273,7 +302,7 @@ export default function NewPropertyPage() {
 
               <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-200">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-teal-700 via-emerald-500 to-sky-500 transition-all duration-300"
+                  className="h-full rounded-full bg-gradient-to-r from-[#0f2747] via-[#17365d] to-[#4d6f96] transition-all duration-300"
                   style={{ width: `${(step / steps.length) * 100}%` }}
                 />
               </div>
@@ -284,7 +313,7 @@ export default function NewPropertyPage() {
                     key={item.id}
                     className={`rounded-[1.5rem] border px-4 py-4 transition ${
                       item.id === step
-                        ? "border-teal-700 bg-teal-50 shadow-[0_12px_30px_-20px_rgba(15,118,110,0.75)]"
+                        ? "border-[#0f2747] bg-[#e8eef8] shadow-[0_12px_30px_-20px_rgba(15,39,71,0.75)]"
                         : item.id < step
                         ? "border-emerald-200 bg-emerald-50/70"
                         : "border-slate-200/80 bg-white/75"
@@ -356,7 +385,7 @@ export default function NewPropertyPage() {
                 type="button"
                 onClick={handleNext}
                 disabled={form.formState.isSubmitting}
-                className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                className="rounded-full bg-[#0f2747] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0b1d35] disabled:cursor-not-allowed disabled:bg-slate-400"
               >
                 {isLastStep ? "Publish property" : "Continue"}
               </button>

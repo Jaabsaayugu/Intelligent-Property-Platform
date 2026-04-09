@@ -11,6 +11,10 @@ export const propertySchema = z.object({
   address: z.string().min(5, "Address is required"),
   city: z.string().min(2, "City is required"),
   county: z.string().optional(),
+  subCounty: z.string().optional(),
+  ward: z.string().optional(),
+  area: z.string().optional(),
+  exactLocation: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 
@@ -47,6 +51,10 @@ export const step2Schema = propertySchema.pick({
   address: true,
   city: true,
   county: true,
+  subCounty: true,
+  ward: true,
+  area: true,
+  exactLocation: true,
   latitude: true,
   longitude: true,
 });

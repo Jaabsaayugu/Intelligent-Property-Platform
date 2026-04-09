@@ -37,7 +37,7 @@ function LoginPageContent() {
 
       const { token } = res.data;
       login(token);
-      document.cookie = `auth_token=${token}; path=/; SameSite=Strict; Max-Age=604800`;
+      document.cookie = `auth_token=${token}; path=/; SameSite=Strict; Max-Age=21600`;
 
       const decoded = JSON.parse(atob(token.split(".")[1]));
       const role = decoded.role?.toLowerCase();
@@ -163,7 +163,7 @@ function LoginPageContent() {
           className={`w-full rounded-full px-4 py-3.5 text-base font-semibold text-white transition duration-200 ${
             loading
               ? "cursor-not-allowed bg-slate-500"
-              : "bg-slate-900 shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 hover:bg-[#0d2240] active:bg-slate-950"
+              : "bg-[#0f2747] shadow-lg shadow-[#0f2747]/20 hover:-translate-y-0.5 hover:bg-[#0b1d35] active:bg-[#08162a]"
           }`}
         >
           {loading ? (

@@ -38,11 +38,11 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         <div className="flex flex-1 flex-col p-5 sm:p-6">
-          <h3 className="line-clamp-2 text-xl font-semibold text-slate-900 transition-colors group-hover:text-teal-700">
+          <h3 className="line-clamp-2 text-xl font-semibold text-slate-900 transition-colors group-hover:text-[#0f2747]">
             {property.title}
           </h3>
 
-          <p className="mt-3 text-2xl font-bold text-teal-700">
+          <p className="mt-3 text-2xl font-bold text-[#0f2747]">
             KSh {property.price.toLocaleString()}
           </p>
 
@@ -52,7 +52,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               <span className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
                 {property.bedrooms} Bed{property.bedrooms !== 1 ? "s" : ""}
               </span>
-              <span className="text-sm font-semibold text-teal-700 transition-transform duration-300 group-hover:translate-x-1">
+              <span className="text-sm font-semibold text-[#0f2747] transition-transform duration-300 group-hover:translate-x-1">
                 View details
               </span>
             </div>
