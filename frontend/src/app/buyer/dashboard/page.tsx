@@ -4,28 +4,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AppBackdrop from "@/components/layout/AppBackdrop";
-import api from "@/lib/axios";
 import { getDisplayName } from "@/lib/display-name";
+import { fetchRecommendations, RecommendedProperty } from "@/lib/recommendations";
 import { useAuthStore } from "@/store/auth.store";
-
-type BuyerProperty = {
-  id: string;
-  title: string;
-  city: string;
-  address: string;
-  price: number;
-  currency: string;
-  bedrooms?: number | null;
-  propertyType: string;
-  description: string;
-};
 
 export default function BuyerDashboard() {
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
-  const [matches, setMatches] = useState<BuyerProperty[]>([]);
+  const [matches, setMatches] = useState<RecommendedProperty[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(true);
+  const [usesBuyerHistory, setUsesBuyerHistory] = useState(false);
   const [propertyFact, setPropertyFact] = useState("Loading a property fact...");
 
   useEffect(() => {
@@ -47,11 +36,13 @@ export default function BuyerDashboard() {
       setMatchesLoading(true);
 
       try {
-        const response = await api.get<{ data: BuyerProperty[] }>("/properties?limit=6");
-        setMatches(response.data.data ?? []);
+        const response = await fetchRecommendations({ limit: 6 });
+        setMatches(response.data ?? []);
+        setUsesBuyerHistory(Boolean(response.meta?.usedBuyerHistory));
       } catch (error) {
         console.error("Failed to load buyer recommendations:", error);
         setMatches([]);
+        setUsesBuyerHistory(false);
       } finally {
         setMatchesLoading(false);
       }
@@ -191,6 +182,11 @@ export default function BuyerDashboard() {
                 <h2 className="mt-3 font-display text-3xl text-slate-900">
                   Curated matches
                 </h2>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
+                  {usesBuyerHistory
+                    ? "These picks are ranked from your recent buying intent and saved request patterns."
+                    : "These picks are based on active listings right now. Send a purchase request to train future matches."}
+                </p>
               </div>
               <button
                 onClick={() => router.push("/buyer/properties")}
@@ -239,8 +235,16 @@ export default function BuyerDashboard() {
                     <p className="mt-4 text-sm leading-6 text-slate-600">
                       {match.description}
                     </p>
+                    {match.recommendationReason && (
+                      <p className="mt-3 rounded-2xl bg-[#eef4fb] px-4 py-3 text-sm leading-6 text-[#17365d]">
+                        {match.recommendationReason}
+                      </p>
+                    )}
                     <p className="mt-3 text-sm font-semibold text-[#0f2747]">
-                      {match.propertyType} | {match.bedrooms ?? "N/A"} bedrooms | View details
+                      {match.propertyType} | {match.bedrooms ?? "N/A"} bedrooms | Score{" "}
+                      {typeof match.recommendationScore === "number"
+                        ? match.recommendationScore.toFixed(2)
+                        : "N/A"}
                     </p>
                   </Link>
                 ))}

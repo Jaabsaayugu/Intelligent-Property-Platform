@@ -36,6 +36,10 @@ export async function ensureContactInquiryTable() {
 
 export async function ensurePropertyInteractionTables() {
   await prisma.$executeRawUnsafe(`
+    CREATE EXTENSION IF NOT EXISTS vector;
+  `);
+
+  await prisma.$executeRawUnsafe(`
     ALTER TABLE "Message"
     ADD COLUMN IF NOT EXISTS "propertyId" TEXT;
   `);
@@ -76,6 +80,11 @@ export async function ensurePropertyInteractionTables() {
       "propertyId" TEXT NOT NULL,
       "buyerId" TEXT NOT NULL
     );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "PurchaseRequest"
+    ADD COLUMN IF NOT EXISTS "embedding" vector(384);
   `);
 
   await prisma.$executeRawUnsafe(`

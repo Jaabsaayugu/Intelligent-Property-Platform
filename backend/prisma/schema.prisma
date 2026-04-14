@@ -122,6 +122,9 @@ model PurchaseRequest {
   propertyId  String
   buyerId     String
 
+
+  embedding     Unsupported("vector(384)")?
+  
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   buyer    User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 }

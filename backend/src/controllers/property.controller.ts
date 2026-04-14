@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { storePurchaseRequestEmbedding } from "../../ai_module/recommendation";
 
 const propertyListInclude = {
   user: {
@@ -475,6 +476,30 @@ export const createPurchaseRequest = async (req: AuthRequest, res: Response) => 
         },
       } as any,
     });
+
+    try {
+      await storePurchaseRequestEmbedding({
+        purchaseRequestId: request.id,
+        offerAmount,
+        message,
+        property: {
+          title: property.title,
+          description: property.description,
+          propertyType: property.propertyType,
+          address: property.address,
+          city: property.city,
+          county: property.county,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          areaSqm: property.areaSqm,
+          price: property.price,
+          currency: property.currency,
+          features: property.features,
+        },
+      });
+    } catch (embeddingError) {
+      console.error("Failed to attach purchase request embedding:", embeddingError);
+    }
 
     res.status(201).json(request);
   } catch (err) {

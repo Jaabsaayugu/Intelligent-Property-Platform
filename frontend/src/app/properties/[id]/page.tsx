@@ -5,8 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import AppBackdrop from "@/components/layout/AppBackdrop";
 import PropertyMapPanel from "@/components/maps/PropertyMapPanel";
+import PropertyCard from "@/components/property/PropertyCard";
 import api from "@/lib/axios";
 import { getDisplayName } from "@/lib/display-name";
+import { fetchRecommendations, RecommendedProperty } from "@/lib/recommendations";
 import { useAuthStore } from "@/store/auth.store";
 
 type PropertyReview = {
@@ -132,6 +134,8 @@ export default function PropertyDetailsPage() {
   const [tourRequests, setTourRequests] = useState<TourRequest[]>([]);
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [relatedProperties, setRelatedProperties] = useState<RecommendedProperty[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   const sellerId = property?.user.id ?? "";
   const isOwner = Boolean(user && sellerId && user.id === sellerId);
@@ -218,6 +222,33 @@ export default function PropertyDetailsPage() {
       void loadOwnerActivity();
     }
   }, [isOwner, propertyId]);
+
+  useEffect(() => {
+    const loadRelatedProperties = async () => {
+      if (!property || !isAuthenticated) {
+        setRelatedProperties([]);
+        return;
+      }
+
+      setRelatedLoading(true);
+
+      try {
+        const response = await fetchRecommendations({
+          limit: 3,
+          excludePropertyId: property.id,
+          query: `${property.propertyType} in ${property.city} ${property.county ?? ""} ${property.bedrooms ?? ""} bedrooms`,
+        });
+        setRelatedProperties(response.data ?? []);
+      } catch (fetchError) {
+        console.error("Failed to load related recommendations:", fetchError);
+        setRelatedProperties([]);
+      } finally {
+        setRelatedLoading(false);
+      }
+    };
+
+    void loadRelatedProperties();
+  }, [isAuthenticated, property]);
 
   const requireBuyer = () => {
     if (!isAuthenticated) {
@@ -399,6 +430,72 @@ export default function PropertyDetailsPage() {
           latitude={property.latitude}
           longitude={property.longitude}
         />
+
+        <section className="hero-panel rounded-[2rem] border border-white/60 p-6 shadow-[0_24px_80px_-45px_rgba(15,23,42,0.55)] sm:p-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#17365d]/80">
+                Recommended next
+              </p>
+              <h2 className="mt-3 font-display text-3xl text-slate-900">
+                Similar listings to compare
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Compare this listing against nearby options with a similar profile before you commit.
+              </p>
+            </div>
+            <Link
+              href="/buyer/properties"
+              className="text-sm font-semibold text-[#0f2747] hover:underline"
+            >
+              Browse all matches
+            </Link>
+          </div>
+
+          <div className="mt-6">
+            {!isAuthenticated && (
+              <div className="rounded-[1.5rem] bg-white/80 p-5 text-sm text-slate-600">
+                Sign in as a buyer to unlock AI recommendations around this property.
+              </div>
+            )}
+
+            {isAuthenticated && relatedLoading && (
+              <div className="rounded-[1.5rem] bg-white/80 p-5 text-sm text-slate-600">
+                Loading related recommendations...
+              </div>
+            )}
+
+            {isAuthenticated && !relatedLoading && relatedProperties.length === 0 && (
+              <div className="rounded-[1.5rem] bg-white/80 p-5 text-sm text-slate-600">
+                No similar recommendation set is available yet.
+              </div>
+            )}
+
+            {isAuthenticated && !relatedLoading && relatedProperties.length > 0 && (
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {relatedProperties.map((item) => (
+                  <PropertyCard
+                    key={item.id}
+                    property={{
+                      id: item.id,
+                      title: item.title,
+                      price: item.price,
+                      currency: item.currency,
+                      location: [item.address, item.city, item.county].filter(Boolean).join(", "),
+                      bedrooms: item.bedrooms ?? 0,
+                      imageUrl: item.images?.[0],
+                      badge:
+                        typeof item.recommendationScore === "number"
+                          ? `Match ${(item.recommendationScore * 100).toFixed(0)}%`
+                          : "Recommended",
+                      footnote: item.recommendationReason,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
 
         {actionMessage && (
           <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-700">
