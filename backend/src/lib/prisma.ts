@@ -7,7 +7,38 @@ const adapter = new PrismaPg({
 
 export const prisma = new PrismaClient({
   adapter,
-});
+} as any);
+
+let vectorExtensionAvailable: boolean | null = null;
+
+export async function hasVectorExtensionSupport() {
+  if (vectorExtensionAvailable !== null) {
+    return vectorExtensionAvailable;
+  }
+
+  try {
+    const result = await prisma.$queryRaw<Array<{ available: boolean }>>`
+      SELECT EXISTS (
+        SELECT 1
+        FROM pg_available_extensions
+        WHERE name = 'vector'
+      ) AS available
+    `;
+
+    vectorExtensionAvailable = Boolean(result[0]?.available);
+
+    if (vectorExtensionAvailable) {
+      await prisma.$executeRawUnsafe(`
+        CREATE EXTENSION IF NOT EXISTS vector;
+      `);
+    }
+  } catch (error) {
+    console.warn("Failed to determine pgvector availability:", error);
+    vectorExtensionAvailable = false;
+  }
+
+  return vectorExtensionAvailable;
+}
 
 export async function ensureUserNameColumns() {
   await prisma.$executeRawUnsafe(`
@@ -35,10 +66,6 @@ export async function ensureContactInquiryTable() {
 }
 
 export async function ensurePropertyInteractionTables() {
-  await prisma.$executeRawUnsafe(`
-    CREATE EXTENSION IF NOT EXISTS vector;
-  `);
-
   await prisma.$executeRawUnsafe(`
     ALTER TABLE "Message"
     ADD COLUMN IF NOT EXISTS "propertyId" TEXT;
@@ -82,10 +109,14 @@ export async function ensurePropertyInteractionTables() {
     );
   `);
 
-  await prisma.$executeRawUnsafe(`
-    ALTER TABLE "PurchaseRequest"
-    ADD COLUMN IF NOT EXISTS "embedding" vector(384);
-  `);
+  if (await hasVectorExtensionSupport()) {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "PurchaseRequest"
+      ADD COLUMN IF NOT EXISTS "embedding" vector(384);
+    `);
+  } else {
+    console.warn('pgvector is not installed; skipping "PurchaseRequest.embedding" setup.');
+  }
 
   await prisma.$executeRawUnsafe(`
     CREATE UNIQUE INDEX IF NOT EXISTS "Review_propertyId_userId_key"

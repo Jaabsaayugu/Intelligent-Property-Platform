@@ -1,47 +1,34 @@
-import type { Property } from "@prisma/client";
-import { prisma } from "../src/lib/prisma";
+import { hasVectorExtensionSupport, prisma } from "../src/lib/prisma";
 import { EMBEDDING_DIMENSION, generateEmbedding } from "./generateEmbeddings";
 
-type PropertyCandidate = Pick<
-  Property,
-  | "id"
-  | "title"
-  | "description"
-  | "propertyType"
-  | "status"
-  | "address"
-  | "city"
-  | "county"
-  | "bedrooms"
-  | "bathrooms"
-  | "areaSqm"
-  | "price"
-  | "currency"
-  | "features"
-  | "images"
-  | "createdAt"
-  | "updatedAt"
->;
+type PropertyDocumentShape = {
+  title: string;
+  description: string;
+  propertyType: string;
+  address: string;
+  city: string;
+  county: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  areaSqm: number | null;
+  price: number;
+  currency: string;
+  features: string[];
+};
+
+type PropertyCandidate = PropertyDocumentShape & {
+  id: string;
+  status: string;
+  images: string[];
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 type PurchaseRequestContext = {
   purchaseRequestId: string;
   offerAmount?: number | null;
   message?: string | null;
-  property: Pick<
-    Property,
-    | "title"
-    | "description"
-    | "propertyType"
-    | "address"
-    | "city"
-    | "county"
-    | "bedrooms"
-    | "bathrooms"
-    | "areaSqm"
-    | "price"
-    | "currency"
-    | "features"
-  >;
+  property: PropertyDocumentShape;
 };
 
 type RecommendationOptions = {
@@ -75,7 +62,7 @@ function normaliseText(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
 }
 
-function buildPropertyDocument(property: PurchaseRequestContext["property"] | PropertyCandidate): string {
+function buildPropertyDocument(property: PropertyDocumentShape | PropertyCandidate): string {
   return [
     property.title,
     property.description,
@@ -146,11 +133,11 @@ async function getBuyerPreferenceProfile(buyerId: string): Promise<BuyerPreferen
   const propertyTypes = new Set<string>();
   const locations = new Set<string>();
   const offers = requests
-    .map((request) => request.offerAmount)
-    .filter((offerAmount): offerAmount is number => typeof offerAmount === "number");
+    .map((request: (typeof requests)[number]) => request.offerAmount)
+    .filter((offerAmount: (typeof requests)[number]["offerAmount"]): offerAmount is number => typeof offerAmount === "number");
 
   const document = requests
-    .map((request) => {
+    .map((request: (typeof requests)[number]) => {
       propertyTypes.add(normaliseText(request.property.propertyType));
       locations.add(normaliseText(request.property.city));
       if (request.property.county) {
@@ -170,7 +157,8 @@ async function getBuyerPreferenceProfile(buyerId: string): Promise<BuyerPreferen
     document,
     propertyTypes,
     locations,
-    averageOffer: offers.length > 0 ? offers.reduce((sum, value) => sum + value, 0) / offers.length : null,
+    averageOffer:
+      offers.length > 0 ? offers.reduce((sum: number, value: number) => sum + value, 0) / offers.length : null,
   };
 }
 
@@ -201,6 +189,10 @@ function scorePropertyHeuristics(property: PropertyCandidate, profile: BuyerPref
 }
 
 export async function storePurchaseRequestEmbedding(context: PurchaseRequestContext): Promise<void> {
+  if (!(await hasVectorExtensionSupport())) {
+    return;
+  }
+
   const embedding = await generateEmbedding(buildPurchaseRequestDocument(context));
   const vectorLiteral = `[${embedding.map((value) => value.toFixed(8)).join(",")}]`;
 
@@ -227,7 +219,7 @@ export async function recommendProperties(options: RecommendationOptions) {
   });
 
   if (!preferenceDocument) {
-    return properties.slice(0, limit).map((property) => ({
+    return properties.slice(0, limit).map((property: PropertyCandidate) => ({
       ...property,
       recommendationScore: 0,
       recommendationReason: "No buyer preference history yet, showing recent active listings.",
@@ -236,7 +228,7 @@ export async function recommendProperties(options: RecommendationOptions) {
 
   const preferenceEmbedding = await generateEmbedding(preferenceDocument);
   const scored = await Promise.all(
-    properties.map(async (property) => {
+    properties.map(async (property: PropertyCandidate) => {
       const propertyEmbedding = await getPropertyEmbedding(property);
       const semanticScore = cosineSimilarity(preferenceEmbedding, propertyEmbedding);
       const heuristicScore = scorePropertyHeuristics(property, buyerProfile);
@@ -254,6 +246,11 @@ export async function recommendProperties(options: RecommendationOptions) {
   );
 
   return scored
-    .sort((left, right) => right.recommendationScore - left.recommendationScore)
+    .sort(
+      (
+        left: (typeof scored)[number],
+        right: (typeof scored)[number]
+      ) => right.recommendationScore - left.recommendationScore
+    )
     .slice(0, limit);
 }

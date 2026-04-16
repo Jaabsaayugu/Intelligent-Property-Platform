@@ -1,9 +1,12 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -121,9 +124,6 @@ model PurchaseRequest {
   updatedAt   DateTime @updatedAt
   propertyId  String
   buyerId     String
-
-
-  embedding     Unsupported("vector(384)")?
   
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   buyer    User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)

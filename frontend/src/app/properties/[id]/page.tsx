@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/ui/back-button"
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -113,6 +114,7 @@ type PurchaseRequest = {
 };
 
 export default function PropertyDetailsPage() {
+
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -372,9 +374,11 @@ export default function PropertyDetailsPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+      <BackButton />
       <AppBackdrop />
 
       <div className="relative mx-auto max-w-7xl space-y-6">
+
         <section className="hero-panel rounded-[2rem] border border-white/60 px-6 py-6 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.55)] sm:px-8">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div>

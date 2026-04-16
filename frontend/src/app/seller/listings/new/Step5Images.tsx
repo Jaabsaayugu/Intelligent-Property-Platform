@@ -217,11 +217,11 @@ export default function Step5Images({ form }: Props) {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragging(false);
-    alert("Please use the Upload button above for Cloudinary integration.");
+    alert("Please use the Upload button above.");
   };
 
   const addExternalUrl = () => {
-    const url = prompt("Paste YouTube or external video URL here:");
+    const url = prompt("Paste YouTube URL here:");
     if (!url) return;
 
     const current = form.getValues("images") || [];
@@ -244,7 +244,7 @@ export default function Step5Images({ form }: Props) {
           Property Media
         </p>
         <p className="mt-3 text-sm leading-7 text-slate-600">
-          Upload up to <strong>20 images or videos</strong> using Cloudinary. You can also add YouTube links.
+          Upload up to <strong>20 images or videos</strong>.
         </p>
       </div>
 
@@ -266,7 +266,7 @@ export default function Step5Images({ form }: Props) {
         >
           {isUploading 
             ? `Uploading... ${uploadProgress}%` 
-            : "📤 Upload Images & Videos"}
+            : "Upload Images & Videos"}
         </button>
       </div>
 
@@ -284,35 +284,36 @@ export default function Step5Images({ form }: Props) {
             className="flex flex-col sm:flex-row gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-4"
           >
             <div className="flex-shrink-0">
-              {url.includes("youtube.com") || url.includes("youtu.be") ? (
-                <img
-                  src={`https://img.youtube.com/vi/${url.split("v=")[1] || url.split("/").pop()}/hqdefault.jpg`}
-                  alt="YouTube thumbnail"
-                  className="h-24 w-40 rounded-2xl object-cover"
-                />
-              ) : (
-                <img
-                  src={
-                    url.includes(".mp4") || url.includes(".mov")
-                      ? "https://via.placeholder.com/160x100/1f2937/ffffff?text=VIDEO"
-                      : url
-                  }
-                  alt={`Media ${index + 1}`}
-                  className="h-24 w-40 rounded-2xl object-cover border border-slate-200"
-                />
-              )}
-            </div>
+  {url.includes("youtube.com") || url.includes("youtu.be") ? (
+    (() => {
+      const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      const videoId = match?.[2];
 
-            <div className="flex-1 min-w-0 pt-2">
-              <p className="text-sm text-slate-600 break-all line-clamp-3">{url}</p>
-              <p className="text-xs text-slate-400 mt-1">
-                {url.includes("youtube.com") || url.includes("youtu.be")
-                  ? "YouTube Video"
-                  : url.includes(".mp4") || url.includes(".mov")
-                  ? "Video"
-                  : "Image"}
-              </p>
-            </div>
+      return videoId ? (
+        <img
+          src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+          alt="YouTube thumbnail"
+          className="h-24 w-40 rounded-2xl object-cover"
+        />
+      ) : (
+        <div className="h-24 w-40 rounded-2xl bg-slate-800 flex items-center justify-center">
+          <span className="text-xs text-slate-400">Invalid YT link</span>
+        </div>
+      );
+    })()
+  ) : (
+    <img
+      src={
+        url.includes(".mp4") || url.includes(".mov")
+          ? "https://via.placeholder.com/160x100/1f2937/ffffff?text=VIDEO"
+          : url
+      }
+      alt={`Media ${index + 1}`}
+      className="h-24 w-40 rounded-2xl object-cover border border-slate-200"
+    />
+  )}
+</div>
 
             <button
               type="button"

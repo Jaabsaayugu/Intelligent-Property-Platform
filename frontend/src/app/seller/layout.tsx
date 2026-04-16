@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Buyer - AfREALTY DATAHOMES",
-  description: "Find your perfect property",
+  title: "Seller - AfREALTY DATAHOMES",
+  description: "Manage your property listings",
 };
 
-export default function BuyerLayout({
+export default function SellerLayout({
   children,
 }: Readonly<{
   children: ReactNode;
@@ -19,4 +19,5 @@ export default function BuyerLayout({
     </>
   );
 }
+
 

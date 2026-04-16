@@ -16,9 +16,6 @@ import {
 } from "./lib/prisma";
 import recommendationRoutes from "../ai_module";
 
-
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
-
 dotenv.config();
 
 const app = express();
