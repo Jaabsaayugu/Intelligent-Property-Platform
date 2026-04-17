@@ -56,10 +56,10 @@ export default function BuyerDashboard() {
       try {
         const response = await fetch("/api/property-facts");
         const data = (await response.json()) as { fact?: string };
-        setPropertyFact(data.fact || "Property details shape buyer confidence.");
+        setPropertyFact(data.fact || "Property details to increase yuorconfidence.");
       } catch (error) {
         console.error("Failed to load property fact:", error);
-        setPropertyFact("Property details shape buyer confidence.");
+        setPropertyFact("Property details to increase your confidence.");
       }
     };
 

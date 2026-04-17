@@ -163,10 +163,10 @@ export default function PropertiesPage() {
                   Browse properties
                 </p>
               <h1 className="mt-3 font-display text-4xl text-slate-900 sm:text-5xl">
-                  AI buyer matches
+                  Recommended matches for you
               </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Explore listings ranked from your buyer history, or describe what you
+                  Explore listings ranked from your history, or describe what you
                   want and let the recommendation engine reprioritize the grid for you.
                 </p>
               </div>
@@ -198,7 +198,7 @@ export default function PropertiesPage() {
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
                 {usesBuyerHistory
                   ? "Your recent request activity is shaping these rankings."
-                  : "No buyer profile signal yet, so we are blending recent listings with recommendation search."}
+                  : "No profile signal yet, so we are blending recent listings with recommendation search."}
               </p>
             </div>
             <div className="text-sm text-slate-600">

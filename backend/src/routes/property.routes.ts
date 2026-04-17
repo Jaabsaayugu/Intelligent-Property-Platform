@@ -37,5 +37,4 @@ router.get("/:id/purchase-requests", authenticate, getPurchaseRequests);
 router.post("/", authenticate, authorize("SELLER"), validate(createPropertySchema), createProperty);
 router.put("/:id", authenticate, authorize("SELLER", "ADMIN"), updateProperty);
 router.delete("/:id", authenticate, authorize("SELLER", "ADMIN"), deleteProperty);
-
 export default router;

@@ -151,6 +151,8 @@ export default function PropertyDetailsPage() {
     setLoading(true);
     setError(null);
 
+
+
     try {
       const response = await api.get<PropertyApiResponse>(`/properties/${propertyId}`);
       const data = response.data;

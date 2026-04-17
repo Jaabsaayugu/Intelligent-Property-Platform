@@ -109,6 +109,20 @@ export async function ensurePropertyInteractionTables() {
     );
   `);
 
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "PropertyView" (
+      "id" TEXT PRIMARY KEY,
+      "propertyId" TEXT NOT NULL REFERENCES "Property"("id") ON DELETE CASCADE,
+      "sessionId" TEXT,
+      "ipAddress" TEXT,
+      "viewedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "PropertyView_propertyId_viewedAt_idx" ON "PropertyView" ("propertyId", "viewedAt");
+  `);
+
   if (await hasVectorExtensionSupport()) {
     await prisma.$executeRawUnsafe(`
       ALTER TABLE "PurchaseRequest"

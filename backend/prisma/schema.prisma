@@ -134,3 +134,14 @@ enum Role {
   SELLER
   ADMIN
 }
+
+model PropertyView {
+  id        String   @id @default(uuid())
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+  sessionId  String?  
+  ipAddress  String? 
+  viewedAt   DateTime @default(now())
+
+  @@index([propertyId, viewedAt])
+}

@@ -588,3 +588,5 @@ export const deleteProperty = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: "Could not delete property" });
   }
 };
+
+

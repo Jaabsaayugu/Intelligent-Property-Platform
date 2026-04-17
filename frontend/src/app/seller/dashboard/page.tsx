@@ -102,9 +102,7 @@ export default function SellerDashboard() {
       setPropertiesError(null);
 
       try {
-        const response = await api.get<{ data: SellerProperty[] }>(
-          `/properties?sellerId=${currentUser.id}`
-        );
+        const response = await api.get<{ data: SellerProperty[] }>(`/properties?sellerId=${currentUser.id}`);
         setProperties(response.data.data ?? []);
       } catch (error) {
         console.error("Failed to load seller properties:", error);
@@ -249,7 +247,7 @@ export default function SellerDashboard() {
                 </h2>
               </div>
               <span className="rounded-full bg-[#e8eef8] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#0f2747]">
-                Last 6 months
+                Last 4 months
               </span>
             </div>
 
