@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getApiBaseUrl } from "@/lib/api-url";
 
 export default function RegisterPage() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBaseUrl = getApiBaseUrl();
   const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: "",

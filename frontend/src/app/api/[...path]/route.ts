@@ -3,7 +3,7 @@ import { getBackendUrl } from "@/lib/server-api";
 async function forward(request: Request, path: string[]) {
   const url = new URL(request.url);
   const query = url.search || "";
-  const targetUrl = `${getBackendUrl()}/${path.join("/")}${query}`;
+  const targetUrl = `${getBackendUrl()}/api/${path.join("/")}${query}`;
   const rawBody = ["GET", "HEAD"].includes(request.method) ? undefined : await request.text();
 
   try {

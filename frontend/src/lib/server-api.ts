@@ -1,11 +1,7 @@
-const DEFAULT_BACKEND_URL = "http://localhost:5000";
+import { getBackendOrigin } from "@/lib/api-url";
 
 export function getBackendUrl() {
-  return (
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.API_URL ||
-    DEFAULT_BACKEND_URL
-  ).replace(/\/+$/, "");
+  return getBackendOrigin();
 }
 
 export async function forwardJsonRequest(
@@ -32,7 +28,7 @@ export async function forwardJsonRequest(
     return Response.json(
       {
         message:
-          "Cannot reach the backend server. Make sure the API is running on http://localhost:5000.",
+          "Cannot reach the backend server. Check BACKEND_URL, API_URL, or NEXT_PUBLIC_API_URL.",
       },
       { status: 503 }
     );

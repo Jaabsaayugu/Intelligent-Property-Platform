@@ -19,9 +19,30 @@ import recommendationRoutes from "../ai_module";
 dotenv.config();
 
 const app = express();
+const allowedOrigins = new Set(
+  (
+    process.env.CORS_ORIGIN ||
+    process.env.FRONTEND_URL ||
+    "http://localhost:3000,http://localhost:5000,https://afrealtydatahomes.vercel.app,https://intelligent-property-platform.onrender.com"
+  )
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked request from ${origin}`));
+    },
+  })
+);
 app.use(express.json());
 app.use(
   rateLimit({
