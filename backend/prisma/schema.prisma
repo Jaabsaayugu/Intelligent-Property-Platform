@@ -1,12 +1,12 @@
 generator client {
   provider = "prisma-client-js"
   engineType = "library"
-  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -70,6 +70,7 @@ model Property {
   tourRequests     TourRequest[]
   purchaseRequests PurchaseRequest[]
   messages         Message[]
+  propertyViews    PropertyView[]
 }
 
 model Message {
