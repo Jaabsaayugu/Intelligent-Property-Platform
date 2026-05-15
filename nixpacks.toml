@@ -2,7 +2,6 @@
 setup = { cmds = ["corepack enable"] }
 
 [build]
-builder = "NIXPACKS"
 buildCommand = "npm ci && npm run build"
 
 [start]
