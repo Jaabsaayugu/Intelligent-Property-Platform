@@ -35,7 +35,13 @@ export function getBackendOrigin() {
 }
 
 export function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_URL
-    ? normalizeUrl(process.env.NEXT_PUBLIC_API_URL)
-    : `${getBackendOrigin()}/api`;
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return normalizeUrl(process.env.NEXT_PUBLIC_API_URL);
+  }
+
+  if (typeof window !== "undefined") {
+    return "/api";
+  }
+
+  return `${getBackendOrigin()}/api`;
 }
